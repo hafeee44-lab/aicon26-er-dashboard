@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-brand: var(--brand);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-urdu: var(--font-nastaliq);
+}
+
+:root {
+  --brand: #d97706;
+}
+
+body {
+  background: var(--color-zinc-50);
+  color: var(--color-zinc-900);
+}
