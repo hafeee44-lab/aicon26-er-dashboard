@@ -93,7 +93,7 @@ export const sampleCases: SurgeCase[] = [
   ),
   patient(
     { name: "Baby Zainab", age: 0.7, sex: "female", complaint: "8-month-old with high fever", note: "8 mahine ki bachi, tez bukhar 39, HR 170", vitals: { hr: 170, temp: 39 } },
-    { specialty: "paediatrics", resources: ["labs"], destination: "discharge", highRisk: false, reason: "Infant with high fever and fast heart rate needs prompt assessment." },
+    { specialty: "paediatrics", resources: ["labs", "iv_fluids"], destination: "ward", highRisk: false, reason: "Infant with high fever and a fast heart rate needs blood tests and IV fluids." },
   ),
   patient(
     { name: "Kashif Mehmood", age: 28, sex: "male", complaint: "Chest tightness, anxious", note: "28M seene mein ghabrahat, vitals normal, pain 4", vitals: { hr: 88, sbp: 124, dbp: 80, spo2: 98, pain: 4 } },
