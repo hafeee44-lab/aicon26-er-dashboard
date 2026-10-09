@@ -13,12 +13,12 @@
   },
   "ours": {
    "n": 300,
-   "exact": 42.3,
-   "withinOne": 92,
-   "under": 7.3,
-   "over": 50.3,
+   "exact": 50.3,
+   "withinOne": 91.3,
+   "under": 6.3,
+   "over": 43.3,
    "urgentTotal": 75,
-   "urgentMissed": 5
+   "urgentMissed": 2
   },
   "codeOnly": {
    "n": 300,
@@ -41,38 +41,38 @@
   "ours": [
    [
     22,
-    3,
+    4,
     0,
     0,
-    1
+    0
    ],
    [
     5,
-    40,
-    4,
+    42,
+    2,
     0,
     0
    ],
    [
     1,
-    62,
-    35,
-    11,
-    0
+    63,
+    36,
+    8,
+    1
    ],
    [
     0,
-    19,
-    50,
-    30,
-    3
+    22,
+    27,
+    49,
+    4
    ],
    [
     0,
-    3,
+    2,
     0,
-    11,
-    0
+    10,
+    2
    ]
   ],
   "nurse": [
@@ -121,9 +121,9 @@
  "admitted": {
   "byOurLevel": {
    "1": 79,
-   "2": 43,
-   "3": 26,
-   "4": 10,
+   "2": 42,
+   "3": 34,
+   "4": 7,
    "5": 0
   },
   "byExpertLevel": {
@@ -138,15 +138,15 @@
     "expertLevel": 3,
     "raised": 44,
     "kept": 33,
-    "raisedCount": 63,
-    "keptCount": 46
+    "raisedCount": 64,
+    "keptCount": 45
    },
    {
     "expertLevel": 4,
-    "raised": 17,
-    "kept": 9,
-    "raisedCount": 69,
-    "keptCount": 33
+    "raised": 22,
+    "kept": 8,
+    "raisedCount": 49,
+    "keptCount": 53
    }
   ]
  },
@@ -162,16 +162,16 @@
     "waitByExpertLevel": {
      "1": 0,
      "2": 0.2,
-     "3": 0.2,
-     "4": 0.3,
-     "5": 0.8
+     "3": 0.1,
+     "4": 0.4,
+     "5": 0
     },
     "urgentWait": {
-     "avg": 0.2,
+     "avg": 0.1,
      "p90": 0
     },
     "minorWait": 0.4,
-    "seen": 30.4,
+    "seen": 30.7,
     "leftWithoutBeingSeen": 0,
     "corridor": 0
    },
@@ -180,15 +180,15 @@
      "1": 0,
      "2": 0,
      "3": 0.1,
-     "4": 0.3,
-     "5": 0.4
+     "4": 0.4,
+     "5": 0
     },
     "urgentWait": {
      "avg": 0,
      "p90": 0
     },
     "minorWait": 0.3,
-    "seen": 30.6,
+    "seen": 30.7,
     "leftWithoutBeingSeen": 0,
     "corridor": 0.4
    }
@@ -201,37 +201,37 @@
    "arrivals": 52.2,
    "firstCome": {
     "waitByExpertLevel": {
-     "1": 19,
-     "2": 16.2,
-     "3": 16.3,
-     "4": 17.3,
-     "5": 17.7
+     "1": 17.6,
+     "2": 13.5,
+     "3": 14.2,
+     "4": 15.3,
+     "5": 13.9
     },
     "urgentWait": {
-     "avg": 16.6,
-     "p90": 45
+     "avg": 14,
+     "p90": 47
     },
-    "minorWait": 17.3,
-    "seen": 41.6,
+    "minorWait": 15.2,
+    "seen": 42.2,
     "leftWithoutBeingSeen": 0,
     "corridor": 0
    },
    "smart": {
     "waitByExpertLevel": {
      "1": 0,
-     "2": 0.5,
-     "3": 6.3,
-     "4": 14.1,
-     "5": 18.3
+     "2": 0.2,
+     "3": 3.3,
+     "4": 12,
+     "5": 16.3
     },
     "urgentWait": {
-     "avg": 0.4,
+     "avg": 0.2,
      "p90": 0
     },
-    "minorWait": 14.5,
-    "seen": 47.2,
+    "minorWait": 12.5,
+    "seen": 48.1,
     "leftWithoutBeingSeen": 0,
-    "corridor": 6
+    "corridor": 6.5
    }
   },
   {
@@ -242,37 +242,37 @@
    "arrivals": 72.6,
    "firstCome": {
     "waitByExpertLevel": {
-     "1": 39.9,
-     "2": 41.3,
-     "3": 41,
-     "4": 41.8,
-     "5": 40
+     "1": 38.8,
+     "2": 38.9,
+     "3": 38.4,
+     "4": 39.6,
+     "5": 37
     },
     "urgentWait": {
-     "avg": 41.2,
-     "p90": 92
+     "avg": 38.9,
+     "p90": 87
     },
-    "minorWait": 41.5,
-    "seen": 42.8,
+    "minorWait": 39.3,
+    "seen": 44,
     "leftWithoutBeingSeen": 0,
     "corridor": 0
    },
    "smart": {
     "waitByExpertLevel": {
-     "1": 0.2,
-     "2": 2.7,
-     "3": 15.6,
-     "4": 35.6,
-     "5": 50.9
+     "1": 0.1,
+     "2": 1.2,
+     "3": 11.4,
+     "4": 33.2,
+     "5": 47.4
     },
     "urgentWait": {
-     "avg": 2.4,
+     "avg": 1.1,
      "p90": 2
     },
-    "minorWait": 37.5,
-    "seen": 56.2,
-    "leftWithoutBeingSeen": 0.6,
-    "corridor": 13.8
+    "minorWait": 35,
+    "seen": 58.5,
+    "leftWithoutBeingSeen": 0.3,
+    "corridor": 14.5
    }
   }
  ]

@@ -61,17 +61,19 @@ After an evaluation, rebuild the app's data:
 
 ## Results (300 visits, 2026-10-10)
 
-Same 300 visits for all three, judged against `KTAS_expert`. The sample includes all 26 expert level 1 visits, so level 1 is over-represented compared with the full dataset.
+These results use the final intake prompt. Splints, slings and crutches are not counted as resources, as in ESI; counting them in an earlier version gave 50% over-triage and 5 urgent patients missed.
+
+All three rows use the same 300 visits, judged against `KTAS_expert`. The sample includes all 26 expert level 1 visits, so level 1 is over-represented compared with the full dataset.
 
 | | Exact | Within 1 level | Under-triage | Over-triage | Urgent (expert 1–2) rated 3+ |
 | --- | --- | --- | --- | --- | --- |
 | Triage nurses | 84% | 99% | 12.0% | 4% | 8 of 75 |
-| **Ours (AI reading + code triage)** | 42% | 92% | **7.3%** | 50% | **5 of 75** |
+| **Ours (AI reading + code triage)** | 50% | 91% | **6.3%** | 43% | **2 of 75** |
 | Code only, true vitals, no AI | 41% | 84% | 48.7% | 10% | 43 of 75 |
 
 - **Resuscitation cases:** we put 22 of the 26 expert level 1 patients at level 1; the nurses put 15.
 - **Reading:** the AI read 99.9% of 2,859 fields correctly and invented no vitals.
 - **Admission vs discharge:** predicted correctly for 65% of patients.
-- **Why we over-triage:** ESI treats possible heart attack, stroke signs, fainting, GI bleeding and new seizures as level 2 ("high-risk situations"), and counts an X-ray plus stitches as two resources (level 3). The Korean scale puts many of these one level lower.
-- **Raised patients were sicker:** expert level 3 patients we raised were admitted (ward, ICU, theatre or death) 44% of the time vs 33% for those we left at level 3; for expert level 4, 17% vs 9%. Admission rates also fall cleanly with our level: L1 79%, L2 43%, L3 26%, L4 10%, L5 0%.
+- **Why we over-triage:** ESI treats possible heart attack, stroke signs, fainting, GI bleeding and new seizures as level 2 ("high-risk situations"). The Korean scale puts many of these one level lower.
+- **Raised patients were sicker:** expert level 3 patients we raised were admitted (ward, ICU, theatre or death) 44% of the time vs 33% for those we left at level 3; for expert level 4, 22% vs 8%. Admission rates also fall with our level: L1 79%, L2 42%, L3 34%, L4 7%, L5 0%.
 - **Every raised level shows its reason**, and the nurse can lower it.
