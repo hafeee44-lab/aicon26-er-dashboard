@@ -46,7 +46,9 @@ The rulebook allows templates and boilerplate if they are disclosed. Before the 
 Everything for the ER dashboard, all visible in the commit history:
 
 - **Backend (Hafi):** the contract (`src/er/types.ts`); the triage, allocation, simulation, care-plan and rounds engine (`src/er/engine.ts`); order reading (`src/er/orders.ts`, `/api/care`); note parsing and AI prompts (`src/er/intake.ts`, `src/er/prompts.ts`); the `/api/intake` and `/api/advise` routes; synthetic demo patients (`src/er/mock.ts`); the evaluation on real visits (`scripts/evaluate.ts`), the real-case replay pool (`src/er/replay.ts`) and the evidence numbers (`src/er/evidence.ts`).
-- **Frontend (Haider):** the dashboard, intake form, actions panel, evidence page and all screens.
+- **Frontend:**
+  - Haider built the first dashboard screens and the state hook.
+  - The final "Instrument" UI (`src/components/command/`) was a full redesign by Hafi. It is modelled on award-winning bedside monitors and hospital command centres, and uses Atkinson Hyperlegible for legibility on a projector.
 
 ## Third-party resources
 
