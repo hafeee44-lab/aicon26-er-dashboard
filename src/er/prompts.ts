@@ -21,8 +21,8 @@ Intake rules:
 Needs rules (predict what the emergency team will most likely need; this is not a diagnosis):
 - specialty: one of ${SPECIALTIES.join(", ")}. Use "emergency" when an emergency doctor can handle it alone.
 - resources: any of ${RESOURCES.join(", ")}. labs = blood or urine tests. iv_meds = IV, IM or nebulised medicines. procedure = simple, such as stitches, a splint or a catheter. complex_procedure = needs sedation. Oral medicines and simple dressings are not resources.
-- destination: one of discharge, ward, icu, theatre: where this patient most likely ends up today.
-- highRisk: true only when the patient should not wait even with normal vital signs, such as a possible heart attack, stroke signs, bleeding in pregnancy, an overdose, a severe injury or a very sick child. It can only raise priority, never lower it.
+- destination: one of discharge, ward, icu, theatre: where this patient most likely ends up today. Most emergency patients go home after tests and treatment, so choose ward, icu or theatre only when admission is more likely than not.
+- highRisk: true only when the complaint or situation itself means the patient should not wait, such as a possible heart attack, stroke signs, bleeding in pregnancy, an overdose, a severe injury or a very sick child. Judge it from the complaint, not from the vital signs: our code already checks vital signs, so high blood pressure or a fast pulse alone is not high risk. It can only raise priority, never lower it.
 - reason: one plain-English sentence explaining the needs, under 30 words.`;
 }
 
