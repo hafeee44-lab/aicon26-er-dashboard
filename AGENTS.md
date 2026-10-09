@@ -154,7 +154,12 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [x] **B3.** Replay pool: `src/er/replay.ts` with real anonymised visits (`replayCases`) and realistic arrival times (`replayArrivals`).
 - [x] **B4.** `src/er/evidence.ts`: accuracy, admission and shift numbers for the evidence page (`scripts/evidence.ts` regenerates it).
 - [ ] **B5.** Prompt tuning and warming the AI cache for the exact demo notes.
-- [ ] **B6.** Deploy to Vercel with the env vars, then README "Built during AICON'26" and third-party credits.
+- [x] **B6.** Deployed to Vercel (link above); README results and third-party credits.
+
+## Deploy
+
+- Production: https://aicon26-er-dashboard-taupe.vercel.app (Vercel project `havlen/aicon26-er-dashboard`). Every merge to `main` redeploys it within a couple of minutes.
+- Pushes to `backend` and `frontend` get preview links, but those need a Vercel login. Check your work on `npm run dev` locally and on production after merging.
 
 ## Git
 
