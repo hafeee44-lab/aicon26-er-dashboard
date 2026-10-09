@@ -1,9 +1,14 @@
+import demoAnswers from "@/er/demo-answers.json";
 import { cleanIntake, cleanNeeds, cleanReview, parseNote, RULES_NEEDS } from "@/er/intake";
 import { intakePrompt } from "@/er/prompts";
-import type { IntakeRequest } from "@/er/types";
+import type { IntakeRequest, IntakeResponse } from "@/er/types";
 import { aiConfig, generateJSON } from "@/lib/ai";
 
 export const maxDuration = 60;
+
+type SavedAnswer = Omit<IntakeResponse, "meta"> & { model: string };
+
+const saved = demoAnswers as Record<string, SavedAnswer>;
 
 export async function POST(req: Request) {
   const { note } = (await req.json()) as IntakeRequest;
@@ -11,6 +16,12 @@ export async function POST(req: Request) {
 
   if (typeof note !== "string" || !note.trim()) {
     return Response.json({ error: "Send a note" }, { status: 400 });
+  }
+
+  const demo = new URL(req.url).searchParams.has("fresh") ? undefined : saved[note.trim()];
+  if (demo) {
+    const { model, ...answer } = demo;
+    return Response.json({ ...answer, meta: { mode: "ai", ms: Date.now() - started, model, cached: true } });
   }
 
   const rulesResponse = (error: string) =>

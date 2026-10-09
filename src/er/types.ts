@@ -1,4 +1,4 @@
-import type { Language, StepMeta } from "@/lib/types";
+import type { Attachment, Language, StepMeta } from "@/lib/types";
 
 export type Level = 1 | 2 | 3 | 4 | 5;
 
@@ -63,6 +63,49 @@ export type Needs = {
   reason: string;
 };
 
+export type TaskKind = "see_doctor" | "medication" | "iv_fluids" | "dressing" | "vitals" | "review" | "test" | "other";
+
+export type TaskRole = "doctor" | "nurse";
+
+export type TaskStatus = "upcoming" | "due" | "overdue" | "done";
+
+export type Frequency = "once" | "every_4h" | "every_6h" | "every_8h" | "every_12h" | "daily" | "as_needed";
+
+export type CareOrder = {
+  kind: Exclude<TaskKind, "see_doctor">;
+  title: string;
+  frequency: Frequency;
+  source: string;
+  suggested: boolean;
+};
+
+export type CarePlan = {
+  problems: string[];
+  orders: CareOrder[];
+  review: string[];
+  confirmedAt: number | null;
+};
+
+export type CareTask = {
+  id: string;
+  patientId: string;
+  kind: TaskKind;
+  title: string;
+  role: TaskRole;
+  ownerId: string | null;
+  dueAt: number;
+  doneAt: number | null;
+  escalatedAt: number | null;
+  source: string;
+};
+
+export type TaskView = CareTask & {
+  status: TaskStatus;
+  lateBy: number;
+  patientName: string;
+  ownerName: string;
+};
+
 export type CaseSource = {
   dataset: string;
   row: number;
@@ -84,10 +127,14 @@ export type Patient = Intake & {
   seenAt: number | null;
   stageEndsAt: number | null;
   doneAt: number | null;
+  nurseId: string | null;
+  plan: CarePlan | null;
   source?: CaseSource;
 };
 
 export type Doctor = { id: string; name: string; specialty: Specialty; onShift: boolean };
+
+export type Nurse = { id: string; name: string };
 
 export type Bed = { id: string; zone: Zone; label: string; patientId: string | null };
 
@@ -98,8 +145,10 @@ export type Department = {
   policy: Policy;
   patients: Patient[];
   doctors: Doctor[];
+  nurses: Nurse[];
   beds: Bed[];
   free: Capacity;
+  tasks: CareTask[];
 };
 
 export type Kpis = {
@@ -116,9 +165,12 @@ export type Kpis = {
   corridor: number;
   leftWithoutBeingSeen: number;
   free: Capacity;
+  tasksDue: number;
+  tasksOverdue: number;
+  tasksOnTime: number | null;
 };
 
-export type ActionKind = "free_beds" | "open_overflow" | "call_doctor" | "redirect_minor" | "transfer";
+export type ActionKind = "free_beds" | "open_overflow" | "call_doctor" | "redirect_minor" | "transfer" | "escalate_tasks";
 
 export type Action = {
   kind: ActionKind;
@@ -133,6 +185,13 @@ export type Arrival = SurgeCase & { at: number };
 
 export type IntakeRequest = { note: string };
 export type IntakeResponse = { intake: Intake; needs: Needs; review: string[]; meta: StepMeta };
+
+export type CareRequest = {
+  note: string;
+  files?: Attachment[];
+  patient?: { age: number | null; sex: "male" | "female" | null; complaint: string };
+};
+export type CareResponse = { plan: Omit<CarePlan, "confirmedAt">; meta: StepMeta };
 
 export type AdviseRequest = { kpis: Kpis; actions: Action[]; language: Language };
 export type AdviseResponse = { message: string; meta: StepMeta };

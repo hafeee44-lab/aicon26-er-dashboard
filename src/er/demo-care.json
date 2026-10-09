@@ -1,0 +1,165 @@
+{
+ "9c1199a326ab4ee1adb1c42c7ea4b912": {
+  "plan": {
+   "problems": [
+    "Right ankle fracture",
+    "Diarrhea",
+    "Mild dehydration"
+   ],
+   "orders": [
+    {
+     "kind": "dressing",
+     "title": "Change wound dressing daily",
+     "frequency": "daily",
+     "source": "wound pe dressing roz change karni hai",
+     "suggested": false
+    },
+    {
+     "kind": "iv_fluids",
+     "title": "Inj RL 1L IV",
+     "frequency": "every_8h",
+     "source": "Inj RL 1L 8 hourly",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj Flagyl 500mg IV",
+     "frequency": "every_8h",
+     "source": "Inj Flagyl 500mg IV TDS",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "ORS",
+     "frequency": "as_needed",
+     "source": "ORS after each loose motion",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Tab Panadol 1g",
+     "frequency": "as_needed",
+     "source": "Tab Panadol 1g SOS",
+     "suggested": false
+    },
+    {
+     "kind": "review",
+     "title": "Ortho review",
+     "frequency": "once",
+     "source": "Ortho review kal subah",
+     "suggested": false
+    },
+    {
+     "kind": "vitals",
+     "title": "Maintain input output chart",
+     "frequency": "daily",
+     "source": "Input output chart maintain karein",
+     "suggested": false
+    }
+   ],
+   "review": []
+  },
+  "model": "gemini-3.1-flash-lite"
+ },
+ "a0f094777487955f93bebdb6c854bafb": {
+  "plan": {
+   "problems": [
+    "Pneumonia",
+    "Hypoxia"
+   ],
+   "orders": [
+    {
+     "kind": "medication",
+     "title": "Inj Rocephin 1g IV",
+     "frequency": "every_12h",
+     "source": "Inj Rocephin 1g IV BD",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Neb Ventolin",
+     "frequency": "every_6h",
+     "source": "Neb Ventolin 6 hourly",
+     "suggested": false
+    },
+    {
+     "kind": "vitals",
+     "title": "SpO2 monitoring, keep above 94%",
+     "frequency": "every_4h",
+     "source": "SpO2 monitoring 4 hourly, keep above 94%",
+     "suggested": false
+    },
+    {
+     "kind": "test",
+     "title": "Repeat CXR",
+     "frequency": "once",
+     "source": "CXR repeat in morning",
+     "suggested": false
+    }
+   ],
+   "review": []
+  },
+  "model": "gemini-3.1-flash-lite"
+ },
+ "fcb1ab6a598b633ea53c7721b5ea1376": {
+  "plan": {
+   "problems": [
+    "Infected diabetic foot ulcer (left)",
+    "Uncontrolled type 2 diabetes"
+   ],
+   "orders": [
+    {
+     "kind": "medication",
+     "title": "Inj. Augmentin 1.2 g IV",
+     "frequency": "every_8h",
+     "source": "1) Inj. Augmentin 1.2 g IV TDS",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj. Mixtard 20 U - 0 - 10 U (before meals)",
+     "frequency": "every_12h",
+     "source": "2) Inj. Mixtard 20 U - 0 - 10 U (before meals) BD",
+     "suggested": false
+    },
+    {
+     "kind": "test",
+     "title": "BSR",
+     "frequency": "every_4h",
+     "source": "3) BSR 4 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "dressing",
+     "title": "Foot dressing c pyodine",
+     "frequency": "daily",
+     "source": "4) Foot dressing c pyodine OD",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Tab. Panadol 1 g",
+     "frequency": "as_needed",
+     "source": "5) Tab. Panadol 1 g SOS",
+     "suggested": false
+    },
+    {
+     "kind": "vitals",
+     "title": "Vitals",
+     "frequency": "every_6h",
+     "source": "6) Vitals 6 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "review",
+     "title": "Surgical review for debridement",
+     "frequency": "once",
+     "source": "7) Surgical review for debridement",
+     "suggested": false
+    }
+   ],
+   "review": []
+  },
+  "model": "gemini-3.1-flash-lite"
+ }
+}
