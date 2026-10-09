@@ -58,6 +58,7 @@ Return JSON only, in this shape:
 Rules:
 - problems: the patient's current problems written in the input, as short plain-English phrases, most important first. At most 6. Do not diagnose anything new.
 - orders: only care that is actually written in the input: medicines, drips, dressings, monitoring, tests and doctor reviews. Never add a medicine, dose or task that is not written, and never change a dose.
+- Skip orders written as stopped, cancelled or already given (e.g. "stop", "band karein", "discontinue", "given"), and mention them in unsure so the nurse knows they were left out.
 - kind: medication, iv_fluids (drips and IV fluids), dressing, vitals (BP, pulse, temperature, SpO2, fluid balance), test (blood tests, sugar checks, X-rays, scans), review (a doctor or specialist visit) or other.
 - title: a short instruction with the medicine and dose exactly as written, e.g. "Inj ceftriaxone 1 g IV" or "Change the ankle dressing".
 - frequency: once (stat or a single time), every_4h, every_6h (QID), every_8h (TDS), every_12h (BD), daily (OD) or as_needed (SOS or PRN). If no frequency is written, use once and mention it in unsure.

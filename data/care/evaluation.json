@@ -1,0 +1,794 @@
+{
+ "summary": {
+  "cases": 14,
+  "evaluated": 14,
+  "failed": [],
+  "photos": 2,
+  "ordersExpected": 73,
+  "ordersFound": 100,
+  "kindRight": 100,
+  "frequencyRight": 100,
+  "extraOrders": 0,
+  "stoppedOrdersScheduled": 0,
+  "stoppedOrdersTotal": 3,
+  "missingFrequencyFlagged": "1 of 1"
+ },
+ "cases": [
+  {
+   "id": "c01",
+   "style": "English shorthand",
+   "results": [
+    {
+     "expected": "ceftriax",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Inj Ceftriaxone 1g IV OD"
+    },
+    {
+     "expected": "paracetamol|panadol",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Tab Paracetamol 1g TDS"
+    },
+    {
+     "expected": "urine|r/e",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test once: Repeat urine R/E tomorrow"
+    },
+    {
+     "expected": "vital",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_6h: Vitals 6 hrly"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.5-flash-lite",
+   "ms": 1527
+  },
+  {
+   "id": "c02",
+   "style": "Roman Urdu",
+   "results": [
+    {
+     "expected": "mixtard|insulin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj Mixtard 18U morning, 8U evening"
+    },
+    {
+     "expected": "bsr|sugar|glucose",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test every_6h: BSR"
+    },
+    {
+     "expected": "dressing|wound",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "dressing daily: Dressing of wound"
+    },
+    {
+     "expected": "amoxiclav|augmentin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj Amoxiclav 1.2g IV"
+    },
+    {
+     "expected": "surg",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Surgery team review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2268
+  },
+  {
+   "id": "c03",
+   "style": "English, with a stopped drug",
+   "results": [
+    {
+     "expected": "neb|atrovent|ventolin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_6h: Neb Atrovent + Ventolin"
+    },
+    {
+     "expected": "hydrocortisone",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj Hydrocortisone 100mg IV"
+    },
+    {
+     "expected": "tab\\.? ?augmentin|augmentin 625",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Tab Augmentin 625mg"
+    },
+    {
+     "expected": "spo2|\\brr\\b|vital|saturation",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_4h: Monitor SpO2 and RR"
+    },
+    {
+     "expected": "pulmon",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Pulmonology review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": true,
+   "review": [
+    "Inj Augmentin was stopped",
+    "The pulmonology review frequency is not specified, defaulting to once"
+   ],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2329
+  },
+  {
+   "id": "c04",
+   "style": "Urdu script",
+   "results": [
+    {
+     "expected": "ceftriax|سیفٹریاکسون",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj Ceftriaxone 1g"
+    },
+    {
+     "expected": "nebul|نیبولائزر",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_6h: Nebulizer"
+    },
+    {
+     "expected": "panadol|paracetamol|پیناڈول",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication as_needed: Panadol"
+    },
+    {
+     "expected": "oxygen|spo2|saturation|آکسیجن",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_4h: Check oxygen level (SpO2)"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 1693
+  },
+  {
+   "id": "c05",
+   "style": "English, child",
+   "results": [
+    {
+     "expected": "zinc",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Syp Zinc 20mg"
+    },
+    {
+     "expected": "ondansetron",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication as_needed: Inj Ondansetron 2mg IV"
+    },
+    {
+     "expected": "weigh",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals daily: Weigh daily"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2597
+  },
+  {
+   "id": "c06",
+   "style": "English, pregnancy",
+   "results": [
+    {
+     "expected": "labetalol",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Tab Labetalol 200mg"
+    },
+    {
+     "expected": "aspirin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Tab Aspirin 75mg"
+    },
+    {
+     "expected": "\\bbp\\b|blood pressure",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_4h: BP monitoring"
+    },
+    {
+     "expected": "protein|dipstick",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test daily: Urine protein dipstick"
+    },
+    {
+     "expected": "ctg|cardiotoco",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test every_12h: CTG"
+    },
+    {
+     "expected": "gyn",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Gynae review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2519
+  },
+  {
+   "id": "c07",
+   "style": "English, missing frequency",
+   "results": [
+    {
+     "expected": "cloxacillin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication once: Inj Cloxacillin 1g IV"
+    },
+    {
+     "expected": "brufen|ibuprofen",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Tab Brufen 400mg TDS after meals"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": true,
+   "unsureFlagged": true,
+   "review": [
+    "Frequency for Inj Cloxacillin was not specified."
+   ],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 1932
+  },
+  {
+   "id": "c08",
+   "style": "Roman Urdu, stroke",
+   "results": [
+    {
+     "expected": "\\bng\\b|feed",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "other every_4h: NG feed 200ml"
+    },
+    {
+     "expected": "clexane|enoxaparin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Inj Clexane 40mg SC"
+    },
+    {
+     "expected": "karwat|turn|position|reposition",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "other every_4h: Change patient position to prevent bed sores"
+    },
+    {
+     "expected": "aspirin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Tab Aspirin 75mg via NG tube"
+    },
+    {
+     "expected": "physio",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Physiotherapy review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2589
+  },
+  {
+   "id": "c09",
+   "style": "English, burns, a dose already given",
+   "results": [
+    {
+     "expected": "dressing|sulfadiazine",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "dressing daily: Dressing with silver sulfadiazine"
+    },
+    {
+     "expected": "\\brl\\b|ringer|parkland|fluid",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": false,
+     "frequencyRight": true,
+     "got": "iv_fluids once: IV RL 2.4 L over first 8 hrs then 2.4 L over next 16 hrs"
+    },
+    {
+     "expected": "tramadol",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj Tramadol 50mg IV"
+    },
+    {
+     "expected": "i/o|input|output",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_4h: I/O chart"
+    },
+    {
+     "expected": "plastic",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Plastic surgery review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": true,
+   "review": [
+    "Inj tetanus toxoid mentioned as already given in ER and thus excluded from orders."
+   ],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2499
+  },
+  {
+   "id": "c10",
+   "style": "English, heart attack",
+   "results": [
+    {
+     "expected": "aspirin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Tab Aspirin 75mg"
+    },
+    {
+     "expected": "clopidogrel",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Tab Clopidogrel 75mg"
+    },
+    {
+     "expected": "atorvastatin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Tab Atorvastatin 40mg"
+    },
+    {
+     "expected": "enoxaparin|clexane",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj Enoxaparin 60mg SC"
+    },
+    {
+     "expected": "ecg",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test daily: ECG"
+    },
+    {
+     "expected": "troponin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test once: Troponin repeat"
+    },
+    {
+     "expected": "cardio",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Cardiology round"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2604
+  },
+  {
+   "id": "c11",
+   "style": "Sloppy mixed shorthand",
+   "results": [
+    {
+     "expected": "ceftriax",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj ceftriax 1g"
+    },
+    {
+     "expected": "\\bns\\b|saline|drip",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "iv_fluids every_12h: NS 1L"
+    },
+    {
+     "expected": "temp",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_6h: Temp chart"
+    },
+    {
+     "expected": "cbc|blood count",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test once: CBC"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 2470
+  },
+  {
+   "id": "c12",
+   "style": "Roman Urdu, the hospital owner's example",
+   "results": [
+    {
+     "expected": "dressing|wound",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "dressing daily: Change wound dressing"
+    },
+    {
+     "expected": "\\brl\\b|ringer",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "iv_fluids every_8h: Inj RL 1L"
+    },
+    {
+     "expected": "flagyl|metronidazole",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj Flagyl 500mg IV"
+    },
+    {
+     "expected": "\\bors\\b|oral rehydration",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication as_needed: ORS"
+    },
+    {
+     "expected": "panadol|paracetamol",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication as_needed: Tab Panadol 1g"
+    },
+    {
+     "expected": "ortho",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Ortho review"
+    },
+    {
+     "expected": "input|output|i/o",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": false,
+     "frequencyRight": true,
+     "got": "vitals daily: Maintain input output chart"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 6213
+  },
+  {
+   "id": "c13",
+   "style": "Photo of a handwritten chart",
+   "results": [
+    {
+     "expected": "augmentin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj. Augmentin 1.2 g IV"
+    },
+    {
+     "expected": "mixtard|insulin",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj. Mixtard 20 U - 0 - 10 U (before meals)"
+    },
+    {
+     "expected": "bsr|sugar|glucose",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "test every_4h: BSR"
+    },
+    {
+     "expected": "dressing|pyodine",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "dressing daily: Foot dressing c pyodine"
+    },
+    {
+     "expected": "panadol|paracetamol",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication as_needed: Tab. Panadol 1 g"
+    },
+    {
+     "expected": "vital",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_6h: Vitals"
+    },
+    {
+     "expected": "surg",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Surgical review for debridement"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": false,
+   "review": [],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 3151
+  },
+  {
+   "id": "c14",
+   "style": "Photo of a handwritten chart, with a stopped drug",
+   "results": [
+    {
+     "expected": "\\bdns\\b|\\brl\\b|ivf|fluid",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "iv_fluids every_12h: IVF: DNS 1 L / RL 1 L alternate"
+    },
+    {
+     "expected": "ceftriax",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_12h: Inj. Ceftriaxone 1 g IV"
+    },
+    {
+     "expected": "metronidazole|flagyl",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj. Metronidazole 500 mg IV"
+    },
+    {
+     "expected": "ketorolac",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication every_8h: Inj. Ketorolac 30 mg IV"
+    },
+    {
+     "expected": "omeprazole",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "medication daily: Inj. Omeprazole 40 mg IV"
+    },
+    {
+     "expected": "drain|i/o|output",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_6h: Drain output + I/O chart"
+    },
+    {
+     "expected": "vital",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "vitals every_4h: Vitals"
+    },
+    {
+     "expected": "wound|dressing",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "dressing daily: Wound check + dressing"
+    },
+    {
+     "expected": "surg",
+     "found": true,
+     "kindRight": true,
+     "frequencyChecked": true,
+     "frequencyRight": true,
+     "got": "review once: Surgical review"
+    }
+   ],
+   "forbidden": [],
+   "extra": [],
+   "unsureNeeded": false,
+   "unsureFlagged": true,
+   "review": [
+    "Inj. Tramadol 50 mg IV TDS was ordered but then explicitly marked as 'stop tramadol', so it has been excluded from the active orders.",
+    "NPO status (Nothing Per Oral) was noted but does not fit the defined order categories."
+   ],
+   "model": "gemini-3.1-flash-lite",
+   "ms": 38042
+  }
+ ]
+}

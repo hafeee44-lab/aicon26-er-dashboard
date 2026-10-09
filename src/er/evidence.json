@@ -275,5 +275,18 @@
     "corridor": 14.5
    }
   }
- ]
+ ],
+ "care": {
+  "cases": 14,
+  "photos": 2,
+  "ordersExpected": 73,
+  "ordersFound": 100,
+  "kindRight": 100,
+  "frequencyRight": 100,
+  "extraOrders": 0,
+  "stoppedOrdersScheduled": 0,
+  "stoppedOrdersTotal": 3,
+  "missingFrequencyFlagged": 1,
+  "missingFrequencyCases": 1
+ }
 }

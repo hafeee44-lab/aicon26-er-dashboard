@@ -55,7 +55,13 @@ function admittedRate(rows: EvalRow[]) {
   return rows.length ? Math.round((rows.filter((r) => ADMITTED.includes(r.disposition)).length / rows.length) * 100) : null;
 }
 
+type CareEvaluation = {
+  summary: Omit<Evidence["care"], "missingFrequencyFlagged" | "missingFrequencyCases"> & { evaluated: number };
+  cases: { unsureNeeded: boolean; unsureFlagged: boolean }[];
+};
+
 const cases = JSON.parse(readFileSync("src/er/replay.json", "utf8")) as SurgeCase[];
+const careEval = JSON.parse(readFileSync("data/care/evaluation.json", "utf8")) as CareEvaluation;
 const { summary, rows } = JSON.parse(readFileSync("data/ktas/evaluation.json", "utf8")) as Evaluation;
 const done = rows.filter((r) => r.ours !== null);
 
@@ -89,6 +95,19 @@ const evidence: Evidence = {
     firstCome: shiftResult(cases, perHour, "first_come"),
     smart: shiftResult(cases, perHour, "smart"),
   })),
+  care: {
+    cases: careEval.summary.evaluated,
+    photos: careEval.summary.photos,
+    ordersExpected: careEval.summary.ordersExpected,
+    ordersFound: careEval.summary.ordersFound,
+    kindRight: careEval.summary.kindRight,
+    frequencyRight: careEval.summary.frequencyRight,
+    extraOrders: careEval.summary.extraOrders,
+    stoppedOrdersScheduled: careEval.summary.stoppedOrdersScheduled,
+    stoppedOrdersTotal: careEval.summary.stoppedOrdersTotal,
+    missingFrequencyFlagged: careEval.cases.filter((c) => c.unsureNeeded && c.unsureFlagged).length,
+    missingFrequencyCases: careEval.cases.filter((c) => c.unsureNeeded).length,
+  },
 };
 
 writeFileSync("src/er/evidence.json", `${JSON.stringify(evidence, null, 1)}\n`);

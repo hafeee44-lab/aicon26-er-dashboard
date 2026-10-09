@@ -239,4 +239,17 @@ export type Evidence = {
   };
   destinationCorrect: number;
   shifts: ShiftEvidence[];
+  care: {
+    cases: number;
+    photos: number;
+    ordersExpected: number;
+    ordersFound: number;
+    kindRight: number;
+    frequencyRight: number;
+    extraOrders: number;
+    stoppedOrdersScheduled: number;
+    stoppedOrdersTotal: number;
+    missingFrequencyFlagged: number;
+    missingFrequencyCases: number;
+  };
 };

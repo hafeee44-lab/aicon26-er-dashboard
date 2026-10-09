@@ -1,0 +1,184 @@
+[
+ {
+  "id": "c01",
+  "style": "English shorthand",
+  "note": "45F, UTI with fever 38.6. Inj Ceftriaxone 1g IV OD. Tab Paracetamol 1g TDS. Encourage oral fluids. Repeat urine R/E tomorrow. Vitals 6 hrly.",
+  "expect": [
+   { "match": "ceftriax", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "paracetamol|panadol", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "urine|r/e", "kinds": ["test"], "frequency": "once" },
+   { "match": "vital", "kinds": ["vitals"], "frequency": "every_6h" }
+  ],
+  "optional": ["fluid"]
+ },
+ {
+  "id": "c02",
+  "style": "Roman Urdu",
+  "note": "Shabana 50F, sugar control nahi, pair pe zakham. Inj Mixtard 18U subah, 8U shaam (BD). BSR din mein 4 dafa, 6 ghante baad. Zakham ki dressing roz. Inj Amoxiclav 1.2g IV 8 ghante baad. Kal surgery wale dekh lein.",
+  "expect": [
+   { "match": "mixtard|insulin", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "bsr|sugar|glucose", "kinds": ["test", "vitals"], "frequency": "every_6h" },
+   { "match": "dressing|wound", "kinds": ["dressing"], "frequency": "daily" },
+   { "match": "amoxiclav|augmentin", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "surg", "kinds": ["review"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c03",
+  "style": "English, with a stopped drug",
+  "note": "Akbar 70M, COPD exacerbation. Neb Atrovent + Ventolin 6 hrly. Inj Hydrocortisone 100mg IV 8 hrly. O2 to keep sat 88-92%. Stop Inj Augmentin, shift to Tab Augmentin 625mg BD. SpO2 and RR 4 hrly. Pulmonology review.",
+  "expect": [
+   { "match": "neb|atrovent|ventolin", "kinds": ["medication"], "frequency": "every_6h" },
+   { "match": "hydrocortisone", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "tab\\.? ?augmentin|augmentin 625", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "spo2|\\brr\\b|vital|saturation", "kinds": ["vitals"], "frequency": "every_4h" },
+   { "match": "pulmon", "kinds": ["review"], "frequency": "once" }
+  ],
+  "optional": ["\\bo2\\b|oxygen"],
+  "forbidden": ["inj\\.? ?augmentin"]
+ },
+ {
+  "id": "c04",
+  "style": "Urdu script",
+  "note": "مریضہ زبیدہ، ۶۵ سال، نمونیا۔ انجکشن سیفٹریاکسون ۱ گرام صبح شام۔ نیبولائزر ہر چھ گھنٹے۔ بخار ہو تو پیناڈول۔ آکسیجن لیول ہر چار گھنٹے چیک کریں۔",
+  "expect": [
+   { "match": "ceftriax|سیفٹریاکسون", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "nebul|نیبولائزر", "kinds": ["medication"], "frequency": "every_6h" },
+   { "match": "panadol|paracetamol|پیناڈول", "kinds": ["medication"], "frequency": "as_needed" },
+   { "match": "oxygen|spo2|saturation|آکسیجن", "kinds": ["vitals"], "frequency": "every_4h" }
+  ]
+ },
+ {
+  "id": "c05",
+  "style": "English, child",
+  "note": "Ali 6 yrs, 18 kg, acute gastroenteritis with some dehydration. ORS 75 ml/kg over 4 hrs, then reassess. Syp Zinc 20mg OD for 10 days. Inj Ondansetron 2mg IV SOS for vomiting. Weigh daily. Monitor urine output.",
+  "expect": [
+   { "match": "zinc", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "ondansetron", "kinds": ["medication"], "frequency": "as_needed" },
+   { "match": "weigh", "kinds": ["vitals", "other", "test"], "frequency": "daily" }
+  ],
+  "optional": ["\\bors\\b|oral rehydration", "reassess", "urine"]
+ },
+ {
+  "id": "c06",
+  "style": "English, pregnancy",
+  "note": "Rubina 28F, G2P1, 36 weeks, PIH, BP 150/100. Tab Labetalol 200mg TDS. Tab Aspirin 75mg OD. BP 4 hrly. Urine protein dipstick daily. CTG twice a day. Gynae review in the evening round.",
+  "expect": [
+   { "match": "labetalol", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "aspirin", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "\\bbp\\b|blood pressure", "kinds": ["vitals"], "frequency": "every_4h" },
+   { "match": "protein|dipstick", "kinds": ["test"], "frequency": "daily" },
+   { "match": "ctg|cardiotoco", "kinds": ["test", "vitals"], "frequency": "every_12h" },
+   { "match": "gyn", "kinds": ["review"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c07",
+  "style": "English, missing frequency",
+  "note": "Imran 40M, cellulitis left leg. Inj Cloxacillin 1g IV. Keep the leg elevated. Mark the edge of the redness. Tab Brufen 400mg TDS after meals.",
+  "expect": [
+   { "match": "cloxacillin", "kinds": ["medication"], "frequency": "once" },
+   { "match": "brufen|ibuprofen", "kinds": ["medication"], "frequency": "every_8h" }
+  ],
+  "optional": ["elevat", "mark|redness|edge"],
+  "flagUnsure": true
+ },
+ {
+  "id": "c08",
+  "style": "Roman Urdu, stroke",
+  "note": "62M, stroke ka doosra din, BP ka mareez. NG feed 200ml har 4 ghante. Inj Clexane 40mg SC roz. Karwat har 4 ghante badlein taake bed sore na ho. Tab Aspirin 75mg OD NG se. Kal physio wale dekhein.",
+  "expect": [
+   { "match": "\\bng\\b|feed", "kinds": ["other", "medication"], "frequency": "every_4h" },
+   { "match": "clexane|enoxaparin", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "karwat|turn|position|reposition", "kinds": ["other", "dressing"], "frequency": "every_4h" },
+   { "match": "aspirin", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "physio", "kinds": ["review"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c09",
+  "style": "English, burns, a dose already given",
+  "note": "Kashif 25M, 15% burns arms and chest. Dressing with silver sulfadiazine daily. IV RL as per Parkland: 2.4 L over first 8 hrs then 2.4 L over next 16 hrs. Inj Tramadol 50mg IV 8 hrly. Inj tetanus toxoid given in ER. I/O chart 4 hrly. Plastic surgery review.",
+  "expect": [
+   { "match": "dressing|sulfadiazine", "kinds": ["dressing"], "frequency": "daily" },
+   { "match": "\\brl\\b|ringer|parkland|fluid", "kinds": ["iv_fluids"], "frequency": null },
+   { "match": "tramadol", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "i/o|input|output", "kinds": ["vitals", "other"], "frequency": "every_4h" },
+   { "match": "plastic", "kinds": ["review"], "frequency": "once" }
+  ],
+  "forbidden": ["tetanus"]
+ },
+ {
+  "id": "c10",
+  "style": "English, heart attack",
+  "note": "Rashid 58M, NSTEMI day 2. Tab Aspirin 75mg OD. Tab Clopidogrel 75mg OD. Tab Atorvastatin 40mg at night daily. Inj Enoxaparin 60mg SC BD. ECG daily. Troponin repeat tomorrow morning. Cardiology round.",
+  "expect": [
+   { "match": "aspirin", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "clopidogrel", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "atorvastatin", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "enoxaparin|clexane", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "ecg", "kinds": ["test", "vitals"], "frequency": "daily" },
+   { "match": "troponin", "kinds": ["test"], "frequency": "once" },
+   { "match": "cardio", "kinds": ["review"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c11",
+  "style": "Sloppy mixed shorthand",
+  "note": "pt k liye: inj ceftriax 1g bd, drip NS 1L 12 hrly, temp chart 6 hrly, CBC kal subah",
+  "expect": [
+   { "match": "ceftriax", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "\\bns\\b|saline|drip", "kinds": ["iv_fluids"], "frequency": "every_12h" },
+   { "match": "temp", "kinds": ["vitals"], "frequency": "every_6h" },
+   { "match": "cbc|blood count", "kinds": ["test"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c12",
+  "style": "Roman Urdu, the hospital owner's example",
+  "note": "Bilal 34M. Rt ankle fracture, back slab lagi hai, wound pe dressing roz change karni hai. 2 din se dast, mild dehydration.\nInj RL 1L 8 hourly\nInj Flagyl 500mg IV TDS\nORS after each loose motion\nTab Panadol 1g SOS\nOrtho review kal subah\nInput output chart maintain karein",
+  "expect": [
+   { "match": "dressing|wound", "kinds": ["dressing"], "frequency": "daily" },
+   { "match": "\\brl\\b|ringer", "kinds": ["iv_fluids"], "frequency": "every_8h" },
+   { "match": "flagyl|metronidazole", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "\\bors\\b|oral rehydration", "kinds": ["medication", "other"], "frequency": "as_needed" },
+   { "match": "panadol|paracetamol", "kinds": ["medication"], "frequency": "as_needed" },
+   { "match": "ortho", "kinds": ["review"], "frequency": "once" },
+   { "match": "input|output|i/o", "kinds": ["vitals", "other"], "frequency": null }
+  ]
+ },
+ {
+  "id": "c13",
+  "style": "Photo of a handwritten chart",
+  "note": "",
+  "image": "chart-ghulam.jpg",
+  "expect": [
+   { "match": "augmentin", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "mixtard|insulin", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "bsr|sugar|glucose", "kinds": ["test", "vitals"], "frequency": "every_4h" },
+   { "match": "dressing|pyodine", "kinds": ["dressing"], "frequency": "daily" },
+   { "match": "panadol|paracetamol", "kinds": ["medication"], "frequency": "as_needed" },
+   { "match": "vital", "kinds": ["vitals"], "frequency": "every_6h" },
+   { "match": "surg", "kinds": ["review"], "frequency": "once" }
+  ]
+ },
+ {
+  "id": "c14",
+  "style": "Photo of a handwritten chart, with a stopped drug",
+  "note": "",
+  "image": "chart-asma.jpg",
+  "expect": [
+   { "match": "\\bdns\\b|\\brl\\b|ivf|fluid", "kinds": ["iv_fluids"], "frequency": "every_12h" },
+   { "match": "ceftriax", "kinds": ["medication"], "frequency": "every_12h" },
+   { "match": "metronidazole|flagyl", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "ketorolac", "kinds": ["medication"], "frequency": "every_8h" },
+   { "match": "omeprazole", "kinds": ["medication"], "frequency": "daily" },
+   { "match": "drain|i/o|output", "kinds": ["vitals", "other"], "frequency": "every_6h" },
+   { "match": "vital", "kinds": ["vitals"], "frequency": "every_4h" },
+   { "match": "wound|dressing", "kinds": ["dressing"], "frequency": "daily" },
+   { "match": "surg", "kinds": ["review"], "frequency": "once" }
+  ],
+  "optional": ["npo|nil by mouth|bowel"],
+  "forbidden": ["tramadol"]
+ }
+]
