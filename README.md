@@ -31,6 +31,7 @@ We tested the full pipeline (AI reading of the nurse's note plus code triage) on
 | Code alone, without the AI | 48.7% | 43 of 75 | |
 
 - **The trade-off:** we rate more patients urgent than the experts did (over-triage 43% vs the nurses' 4%). ESI treats possible heart attack, stroke signs and GI bleeding as level 2, where the Korean experts often chose level 3. The patients we raised were admitted more often than those we didn't, and every raised level shows its reason so the nurse can lower it.
+- **Reading care orders:** on 14 synthetic notes and handwritten-style charts we wrote (with traps), the AI found 73 of 73 orders with the right type and frequency, added none, and scheduled none of the 3 stopped or already-given drugs. This is a small, self-made test; see [`data/care/README.md`](data/care/README.md).
 - **Smart allocation:** replaying real visits at peak load (17 arrivals an hour, averaged over 20 simulated 4-hour shifts), patients the experts rated urgent waited **about 1 minute instead of 39**, and about 58 patients were seen instead of 44.
 
 ## Built before AICON'26 (disclosed)
@@ -52,7 +53,11 @@ Everything for the ER dashboard, all visible in the commit history:
 - **Software:** Next.js, React, Tailwind CSS and the Google Gemini API.
 - **Triage method:** triage levels are based on the published Emergency Severity Index (ESI).
 - **Dataset:** Moon S-H, Shim JL, Park K-S, Park C-S (2019). Triage accuracy and causes of mistriage using the Korean Triage and Acuity Scale. *PLOS ONE* 14(9): e0216972. https://doi.org/10.1371/journal.pone.0216972. CC BY 4.0. These are 1,267 anonymised visits, used for evaluation and for the "real cases" replay.
-- **Statistics:** hospital beds per 1,000 people, World Bank indicator SH.MED.BEDS.ZS (WHO data; Pakistan 0.6 in 2017).
+- **Statistics:**
+  - Hospital beds per 1,000 people: World Bank indicator SH.MED.BEDS.ZS (WHO data; Pakistan 0.6 in 2017).
+  - Omitted doses: Keers et al. (2020), *PLOS ONE*, "Prevalence, nature and predictors of omitted medication doses in mental health hospitals": 14.6% of 18,664 scheduled doses omitted.
+  - Paper charts: an audit of 772 paper prescription charts in an English hospital trust (*The Pharmaceutical Journal*, "Omitted and delayed medicines: the perils of paper prescription charts") found 37% of regular medicines omitted or delayed.
+  - Missed nursing care in low- and middle-income countries: systematic review, PMC10015781.
 - **Demo patients:** the 23 demo patients in `src/er/mock.ts` are synthetic.
 
 ---

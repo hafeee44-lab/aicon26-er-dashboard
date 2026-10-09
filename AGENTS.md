@@ -155,11 +155,12 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [ ] **F6. Actions panel:** each item from `actions(d)` with its severity colour and an **Apply** button calling `apply(d, kind)`. Below it, the advice box: a button that posts to `/api/advise` and shows the message, with an English / Urdu toggle (Urdu uses the `--font-nastaliq` font and right-to-left text).
 - [ ] **F7. Intake form:** a text box (optional: a mic button using the browser's built-in speech recognition, no new packages) → `POST /api/intake` → editable fields with the `review` ones highlighted in amber → live level preview from `triage(intake, needs)` with its flags → **Admit** calls `admit(d, intake, needs, review)`.
   **Demo notes:** show `demoNotes` (`import { demoNotes } from "@/er/demo-notes"`, 9 notes from level 1 to 5 in Roman Urdu, Urdu and English) as one-tap example chips above the note box. Their AI answers are saved in the repo, so they come back instantly on stage and on the live site (`meta.cached: true`). Any other note goes to Gemini live.
-- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: `import { evidence } from "@/er/evidence"` (type `Evidence` in `src/er/types.ts`); everything is pre-computed, so there is no fetch or loading state. Four sections:
+- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: `import { evidence } from "@/er/evidence"` (type `Evidence` in `src/er/types.ts`); everything is pre-computed, so there is no fetch or loading state. Five sections:
   1. **Safer than triage nurses:** `evidence.triage` (nurse / ours / codeOnly) on 300 real visits. Lead with under-triage (`under`) and urgent patients missed (`urgentMissed` of `urgentTotal`), plus `evidence.level1` (critical patients caught: ours vs nurses). Show over-triage honestly, with this caption: "ESI rates possible heart attack, stroke and GI bleeding as level 2; the Korean experts often rated them 3".
   2. **The AI reads notes accurately:** `evidence.reading` (`correct`% of `fieldsChecked`, `invented` = 0).
   3. **Raised patients really were sicker:** `evidence.admitted.raised` (admitted % for raised vs kept) and `byOurLevel` as a falling bar chart.
-  4. **Smart allocation:** `evidence.shifts` (typical / busy / peak, each averaged over 20 simulated 4-hour shifts of real visits). Bars for first come vs smart: `urgentWait.avg`, `minorWait`, `seen`; also show `corridor`.
+  4. **The AI reads care orders safely:** `evidence.care`, e.g. "73 of 73 orders read, 0 invented, 0 stopped drugs scheduled". Add the caption "14 synthetic notes and charts we wrote".
+  5. **Smart allocation:** `evidence.shifts` (typical / busy / peak, each averaged over 20 simulated 4-hour shifts of real visits). Bars for first come vs smart: `urgentWait.avg`, `minorWait`, `seen`; also show `corridor`.
 
   Credit the source under it: "Moon et al. 2019, PLOS ONE, CC BY 4.0".
 - [ ] **F9. Polish:** loading, empty and error states, the amber "rules" badge, phone layout, projector check (stand 3 m back), page title in `layout.tsx`.
@@ -183,7 +184,7 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [x] **B4.** `src/er/evidence.ts`: accuracy, admission and shift numbers for the evidence page (`scripts/evidence.ts` regenerates it).
 - [x] **B5.** Demo notes with saved AI answers (`src/er/demo-notes.ts`, `scripts/warm.ts`), plus a prompt fix so resources are counted as in ESI.
 - [x] **B7.** Care plans: `/api/care` (notes + photo/PDF → problems and orders), schedules, owners, `rounds`, task KPIs, escalation, ward patients in the demo, saved answers for the demo notes and the sample chart.
-- [ ] **B8.** AI order-reading accuracy on synthetic charts and notes, for the evidence page.
+- [x] **B8.** AI order-reading accuracy on 14 synthetic notes and charts (`data/care/`): 73 of 73 orders, 0 invented, 0 stopped drugs scheduled. Available as `evidence.care`.
 - [x] **B6.** Deployed to Vercel (see Deploy below); README results and third-party credits.
 
 ## Deploy

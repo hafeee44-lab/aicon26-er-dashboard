@@ -15,5 +15,8 @@ export const demoCareNotes: string[] = [
   "Nasreen 61F, pneumonia, on 2L oxygen.\nInj Rocephin 1g IV BD\nNeb Ventolin 6 hourly\nSpO2 monitoring 4 hourly, keep above 94%\nCXR repeat in morning",
 ];
 
-export const demoCharts = [{ label: "Treatment chart (Ghulam Rasool)", src: "/demo/chart-ghulam.jpg", mimeType: "image/jpeg" }];
+export const demoCharts = [
+  { label: "Treatment chart (Ghulam Rasool)", src: "/demo/chart-ghulam.jpg", mimeType: "image/jpeg" },
+  { label: "Post-op orders with a stopped drug (Asma Bibi)", src: "/demo/chart-asma.jpg", mimeType: "image/jpeg" },
+];
 

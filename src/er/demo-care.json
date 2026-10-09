@@ -9,14 +9,14 @@
    "orders": [
     {
      "kind": "dressing",
-     "title": "Change wound dressing daily",
+     "title": "Change wound dressing",
      "frequency": "daily",
      "source": "wound pe dressing roz change karni hai",
      "suggested": false
     },
     {
      "kind": "iv_fluids",
-     "title": "Inj RL 1L IV",
+     "title": "Inj RL 1L",
      "frequency": "every_8h",
      "source": "Inj RL 1L 8 hourly",
      "suggested": false
@@ -84,14 +84,14 @@
     },
     {
      "kind": "vitals",
-     "title": "SpO2 monitoring, keep above 94%",
+     "title": "SpO2 monitoring",
      "frequency": "every_4h",
      "source": "SpO2 monitoring 4 hourly, keep above 94%",
      "suggested": false
     },
     {
      "kind": "test",
-     "title": "Repeat CXR",
+     "title": "CXR repeat",
      "frequency": "once",
      "source": "CXR repeat in morning",
      "suggested": false
@@ -105,7 +105,7 @@
   "plan": {
    "problems": [
     "Infected diabetic foot ulcer (left)",
-    "Uncontrolled type 2 diabetes"
+    "Uncontrolled type 2 diabetes mellitus"
    ],
    "orders": [
     {
@@ -159,6 +159,84 @@
     }
    ],
    "review": []
+  },
+  "model": "gemini-3.1-flash-lite"
+ },
+ "fa6f96bb50bd945133f21a8112cbf676": {
+  "plan": {
+   "problems": [
+    "Perforated appendix",
+    "Post-operative day 1 of open appendectomy"
+   ],
+   "orders": [
+    {
+     "kind": "iv_fluids",
+     "title": "IVF: DNS 1 L / RL 1 L alternate",
+     "frequency": "every_12h",
+     "source": "IVF: DNS 1 L / RL 1 L alternate, 12 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj. Ceftriaxone 1 g IV",
+     "frequency": "every_12h",
+     "source": "Inj. Ceftriaxone 1 g IV BD",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj. Metronidazole 500 mg IV",
+     "frequency": "every_8h",
+     "source": "Inj. Metronidazole 500 mg IV TDS",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj. Ketorolac 30 mg IV",
+     "frequency": "every_8h",
+     "source": "Inj. Ketorolac 30 mg IV 8 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "medication",
+     "title": "Inj. Omeprazole 40 mg IV",
+     "frequency": "daily",
+     "source": "Inj. Omeprazole 40 mg IV OD",
+     "suggested": false
+    },
+    {
+     "kind": "vitals",
+     "title": "Drain output + I/O chart",
+     "frequency": "every_6h",
+     "source": "Drain output + I/O chart 6 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "vitals",
+     "title": "Vitals",
+     "frequency": "every_4h",
+     "source": "Vitals 4 hrly",
+     "suggested": false
+    },
+    {
+     "kind": "dressing",
+     "title": "Wound check + dressing",
+     "frequency": "daily",
+     "source": "Wound check + dressing OD",
+     "suggested": false
+    },
+    {
+     "kind": "review",
+     "title": "Surgical review",
+     "frequency": "once",
+     "source": "Surgical review in evening",
+     "suggested": false
+    }
+   ],
+   "review": [
+    "Inj. Tramadol 50 mg IV TDS was ordered but then explicitly marked as 'stop tramadol', so it has been excluded from the active orders.",
+    "NPO status (Nothing Per Oral) was noted but does not fit the defined order categories."
+   ]
   },
   "model": "gemini-3.1-flash-lite"
  }
