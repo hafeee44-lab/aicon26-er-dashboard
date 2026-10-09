@@ -81,12 +81,14 @@ The engine is plain TypeScript with no server code, so **the dashboard runs it i
 Every engine function returns a **new** `Department` and never changes the one you pass in, so it plugs straight into React state:
 
 ```ts
-import { actions, admit, apply, clock, kpis, setPolicy, surge, tick, triage } from "@/er/engine";
+import { actions, admit, apply, clock, kpis, setPolicy, simulate, surge, tick, triage } from "@/er/engine";
 import { mockDepartment, surgeCases } from "@/er/mock";
+import { ARRIVALS_PER_HOUR, replayArrivals, replayCases } from "@/er/replay";
 
 let d = mockDepartment();          // a busy ER at 08:45 with 8 patients already in
 d = tick(d, 1);                    // one simulated minute passes
-d = surge(d, surgeCases);          // 15 patients arrive at once
+d = surge(d, surgeCases);          // 15 synthetic patients arrive at once
+d = surge(d, replayCases.slice(0, 15)); // or 15 real anonymised ED visits (Moon et al. 2019)
 d = setPolicy(d, "first_come");    // or "smart"
 const k = kpis(d);                 // numbers for the KPI bar
 const a = actions(d);              // problems with a suggested fix
@@ -94,6 +96,7 @@ d = apply(d, a[0].kind);           // the fix, applied
 clock(d.now);                      // "08:46"
 triage(intake, needs);             // { level, flags } before admitting
 d = admit(d, intake, needs, review);
+simulate(replayArrivals(ARRIVALS_PER_HOUR.busy, 240), "smart", 240); // a busy 4-hour shift of real visits
 ```
 
 Useful facts for display:
@@ -102,6 +105,7 @@ Useful facts for display:
 - Wait time: `(p.seenAt ?? d.now) - p.arrivedAt` minutes. In the queue: `p.stage === "waiting"`. On a corridor trolley: `!p.bedId` and the stage is `with_doctor`, `awaiting_results` or `awaiting_bed`. Finished: `isDone(p)`.
 - Doctors: `onShift: false` is the backup doctor; `isBusy(d, doctor)` says whether they are with a patient.
 - Beds: `zone` is `resus`, `acute` or `fasttrack`; `patientId` is null when free. "Open overflow" adds beds `O1`–`O4`.
+- Real cases: patients from `replayCases` carry `p.source` with `expertLevel`, `nurseLevel` and `outcome` (where they really went). Show it on the card, e.g. "Experts: L2 · Nurse: L3 · went to ward", so judges can see our level next to the experts' one. Synthetic patients have no `source`.
 - Level colours (standard triage colours): 1 red, 2 orange, 3 yellow, 4 green, 5 blue.
 
 ## The contract
@@ -128,20 +132,20 @@ Tick these off in your commits. Ask your teammate before starting a task from th
 The look: a calm hospital control room on a projector. Large type, strong contrast, level colours used only for levels and alerts. It must also work on a phone.
 
 - [ ] **F1. State hook** `src/er/useDepartment.ts`: holds the `Department` (starts from `mockDepartment()`), a play/pause clock that calls `tick(d, 1)` every second, speed ×1 / ×5 / ×15, and `surge`, `admit`, `apply`, `setPolicy`, `reset`. Derives `kpis(d)` and `actions(d)`.
-- [ ] **F2. Dashboard page** `src/app/page.tsx` (replaces the old starter page): top bar with product name, clock (`clock(d.now)`), play/pause, speed, **Surge** button, policy toggle (first come / smart), reset.
+- [ ] **F2. Dashboard page** `src/app/page.tsx` (replaces the old starter page): top bar with product name, clock (`clock(d.now)`), play/pause, speed, **Surge** button, policy toggle (first come / smart), reset. Surge offers "Demo cases" (`surgeCases`) and "Real cases" (the next 15 of `replayCases` on each press).
 - [ ] **F3. KPI bar:** waiting, critical waiting, average and longest wait, time to doctor per level, free beds per zone, doctors busy / on shift, boarding, corridor, left without being seen.
 - [ ] **F4. Patient board:** cards grouped by stage (waiting, with doctor, awaiting results, awaiting bed). Each card shows the level colour and number, name, age, sex, complaint, flags, need chips (specialty, tests, destination), doctor and bed, live wait time, a "check" badge when `review` is not empty and a "corridor" badge when there is no bed. Waiting is sorted by level, then wait.
 - [ ] **F5. Beds and doctors panel:** bed grid by zone (free or the patient's level colour) and the doctor list (free / busy with whom, specialty, backup off shift).
 - [ ] **F6. Actions panel:** each item from `actions(d)` with its severity colour and an **Apply** button calling `apply(d, kind)`. Below it, the advice box: a button that posts to `/api/advise` and shows the message, with an English / Urdu toggle (Urdu uses the `--font-nastaliq` font and right-to-left text).
 - [ ] **F7. Intake form:** a text box (optional: a mic button using the browser's built-in speech recognition, no new packages) → `POST /api/intake` → editable fields with the `review` ones highlighted in amber → live level preview from `triage(intake, needs)` with its flags → **Admit** calls `admit(d, intake, needs, review)`.
-- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: first come vs smart compared on the same arrivals. Until backend ships `public/evidence.json`, compute it in the browser: `simulate(arrivals, "first_come", 180)` vs `simulate(arrivals, "smart", 180)` and compare `kpis(...).timeToDoctor`, `corridor` and `leftWithoutBeingSeen`. Arrivals can be built from `sampleCases` with `at: i * 4`.
+- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: first come vs smart compared on the same arrivals. Until backend ships `public/evidence.json`, compute it in the browser: `simulate(arrivals, "first_come", 240)` vs `simulate(arrivals, "smart", 240)` and compare `kpis(...).timeToDoctor`, `corridor` and `leftWithoutBeingSeen`. Use `replayArrivals(ARRIVALS_PER_HOUR.busy, 240)` as the arrivals: real visits at a busy hour's rate.
 - [ ] **F9. Polish:** loading, empty and error states, the amber "rules" badge, phone layout, projector check (stand 3 m back), page title in `layout.tsx`.
 
 ### Backend (Hafi)
 
 - [x] **B1.** Contract, engine (triage, allocation, simulation, KPIs, actions), demo patients, `/api/intake`, `/api/advise`.
 - [ ] **B2.** Real triage dataset (Kaggle "Emergency Service – Triage Application", Moon et al. 2019) in `data/`, plus `scripts/evaluate.ts`: how often our triage under- and over-triages compared with the expert level, next to the nurses' 14.7%.
-- [ ] **B3.** Replay pool: anonymised dataset rows turned into surge cases, so Surge can replay real arrivals.
+- [x] **B3.** Replay pool: `src/er/replay.ts` with real anonymised visits (`replayCases`) and realistic arrival times (`replayArrivals`).
 - [ ] **B4.** `public/evidence.json`: first come vs smart on a replayed shift, and the accuracy numbers (shape agreed with frontend first, as a `CONTRACT:` change).
 - [ ] **B5.** Prompt tuning and warming the AI cache for the exact demo notes.
 - [ ] **B6.** Deploy to Vercel with the env vars, then README "Built during AICON'26" and third-party credits.

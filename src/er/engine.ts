@@ -1,8 +1,10 @@
 import type {
   Action,
   ActionKind,
+  Arrival,
   Bed,
   Capacity,
+  CaseSource,
   Department,
   Doctor,
   Intake,
@@ -13,6 +15,7 @@ import type {
   Policy,
   Resource,
   Stage,
+  SurgeCase,
   Vitals,
   Zone,
 } from "./types";
@@ -55,7 +58,6 @@ export function dangerVitals(age: number | null, v: Vitals) {
   return [
     v.hr !== null && v.hr > hr && `Heart rate ${v.hr} (danger zone above ${hr})`,
     v.rr !== null && v.rr > rr && `Breathing rate ${v.rr} (danger zone above ${rr})`,
-    v.spo2 !== null && v.spo2 < 92 && `Oxygen ${v.spo2}% (danger zone below 92%)`,
   ].filter(isString);
 }
 
@@ -69,17 +71,19 @@ export function triage(intake: Intake, needs: Needs): { level: Level; flags: str
 
   if (critical.length) return { level: 1, flags: critical };
 
+  const count = resourceCount(needs.resources);
+
   const high = [
     v.consciousness === "voice" && "Confused or drowsy",
     v.pain !== null && v.pain >= 7 && `Severe pain (${v.pain}/10)`,
     v.sbp !== null && v.sbp < 90 && `Low blood pressure (${v.sbp} systolic)`,
-    ...dangerVitals(intake.age, v),
+    v.spo2 !== null && v.spo2 < 92 && `Oxygen ${v.spo2}% (below 92%)`,
+    ...(count >= 2 ? dangerVitals(intake.age, v) : []),
     needs.highRisk && "High-risk situation",
   ].filter(isString);
 
   if (high.length) return { level: 2, flags: high };
 
-  const count = resourceCount(needs.resources);
   return { level: count === 0 ? 5 : count === 1 ? 4 : 3, flags: [] };
 }
 
@@ -109,7 +113,7 @@ export function initialDepartment(policy: Policy = "smart"): Department {
   };
 }
 
-export function admit(dept: Department, intake: Intake, needs: Needs, review: string[] = []): Department {
+export function admit(dept: Department, intake: Intake, needs: Needs, review: string[] = [], source?: CaseSource): Department {
   const d = structuredClone(dept);
   const { level, flags } = triage(intake, needs);
 
@@ -127,14 +131,15 @@ export function admit(dept: Department, intake: Intake, needs: Needs, review: st
     seenAt: null,
     stageEndsAt: null,
     doneAt: null,
+    ...(source && { source }),
   });
 
   allocateIn(d);
   return d;
 }
 
-export function surge(dept: Department, cases: { intake: Intake; needs: Needs }[]): Department {
-  return cases.reduce((d, c) => admit(d, c.intake, c.needs), dept);
+export function surge(dept: Department, cases: SurgeCase[]): Department {
+  return cases.reduce((d, c) => admit(d, c.intake, c.needs, [], c.source), dept);
 }
 
 export function allocate(dept: Department): Department {
@@ -187,11 +192,11 @@ export function apply(dept: Department, kind: ActionKind): Department {
   return d;
 }
 
-export function simulate(arrivals: { at: number; intake: Intake; needs: Needs }[], policy: Policy, minutes: number): Department {
+export function simulate(arrivals: Arrival[], policy: Policy, minutes: number): Department {
   let d = initialDepartment(policy);
 
   for (let t = 0; t <= minutes; t++) {
-    for (const a of arrivals.filter((x) => x.at === t)) d = admit(d, a.intake, a.needs);
+    for (const a of arrivals.filter((x) => x.at === t)) d = admit(d, a.intake, a.needs, [], a.source);
     if (t < minutes) d = tick(d);
   }
 

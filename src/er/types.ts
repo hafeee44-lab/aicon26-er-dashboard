@@ -63,6 +63,14 @@ export type Needs = {
   reason: string;
 };
 
+export type CaseSource = {
+  dataset: string;
+  row: number;
+  expertLevel: Level;
+  nurseLevel: Level;
+  outcome: string;
+};
+
 export type Patient = Intake & {
   id: string;
   arrivedAt: number;
@@ -76,6 +84,7 @@ export type Patient = Intake & {
   seenAt: number | null;
   stageEndsAt: number | null;
   doneAt: number | null;
+  source?: CaseSource;
 };
 
 export type Doctor = { id: string; name: string; specialty: Specialty; onShift: boolean };
@@ -118,7 +127,9 @@ export type Action = {
   detail: string;
 };
 
-export type SurgeCase = { intake: Intake; needs: Needs };
+export type SurgeCase = { intake: Intake; needs: Needs; source?: CaseSource };
+
+export type Arrival = SurgeCase & { at: number };
 
 export type IntakeRequest = { note: string };
 export type IntakeResponse = { intake: Intake; needs: Needs; review: string[]; meta: StepMeta };
