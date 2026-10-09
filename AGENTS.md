@@ -159,12 +159,13 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 ## Deploy
 
 - Production: https://aicon26-er-dashboard-taupe.vercel.app (Vercel project `havlen/aicon26-er-dashboard`). Every merge to `main` redeploys it within a couple of minutes.
-- Pushes to `backend` and `frontend` get preview links, but those need a Vercel login. Check your work on `npm run dev` locally and on production after merging.
+- **Only Hafi merges pull requests into `main`.** The Vercel project is on the free plan, which only deploys commits authored by Hafi. If Haider merges, the production deploy is blocked ("Git author haiderimran019 must have access to the project").
+- Preview links for `frontend` are blocked for the same reason. Check your work with `npm run dev` locally, then on production once Hafi merges.
 
 ## Git
 
 - Backend works on branch `backend`, frontend on branch `frontend`. Never commit straight to `main`.
 - Start of every session, on your own branch: `git pull origin main`.
-- Commit small and often. Open a pull request to `main` whenever something works (at least every 2–3 hours); the other person merges it.
+- Commit small and often. Open a pull request to `main` whenever something works (at least every 2–3 hours); Hafi merges it (see Deploy).
 - Never commit `.env.local`, `ME.md` or any API key.
 - Tell your teammate before adding a dependency. If `package-lock.json` conflicts, keep either version and run `npm install`.
