@@ -192,6 +192,22 @@ export function apply(dept: Department, kind: ActionKind): Department {
   return d;
 }
 
+export function arrivalsFrom(cases: SurgeCase[], perHour: number, minutes: number, seed = 1): Arrival[] {
+  let s = seed;
+  const gap = () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return (-Math.log(1 - s / 4294967296) * 60) / perHour;
+  };
+  const start = ((seed - 1) * 53) % cases.length;
+  const arrivals: Arrival[] = [];
+
+  for (let at = gap(); at < minutes; at += gap()) {
+    arrivals.push({ ...cases[(start + arrivals.length) % cases.length], at: Math.floor(at) });
+  }
+
+  return arrivals;
+}
+
 export function simulate(arrivals: Arrival[], policy: Policy, minutes: number): Department {
   let d = initialDepartment(policy);
 

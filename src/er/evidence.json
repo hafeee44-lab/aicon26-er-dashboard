@@ -1,0 +1,279 @@
+{
+ "source": "Moon et al. 2019, PLOS ONE 14(9): e0216972 (CC BY 4.0)",
+ "visits": 300,
+ "triage": {
+  "nurse": {
+   "n": 300,
+   "exact": 84,
+   "withinOne": 99,
+   "under": 12,
+   "over": 4,
+   "urgentTotal": 75,
+   "urgentMissed": 8
+  },
+  "ours": {
+   "n": 300,
+   "exact": 42.3,
+   "withinOne": 92,
+   "under": 7.3,
+   "over": 50.3,
+   "urgentTotal": 75,
+   "urgentMissed": 5
+  },
+  "codeOnly": {
+   "n": 300,
+   "exact": 41.3,
+   "withinOne": 84,
+   "under": 48.7,
+   "over": 10,
+   "urgentTotal": 75,
+   "urgentMissed": 43
+  }
+ },
+ "level1": {
+  "total": 26,
+  "ours": 22,
+  "nurse": 15
+ },
+ "confusion": {
+  "rows": "expert level 1-5",
+  "columns": "our level 1-5",
+  "ours": [
+   [
+    22,
+    3,
+    0,
+    0,
+    1
+   ],
+   [
+    5,
+    40,
+    4,
+    0,
+    0
+   ],
+   [
+    1,
+    62,
+    35,
+    11,
+    0
+   ],
+   [
+    0,
+    19,
+    50,
+    30,
+    3
+   ],
+   [
+    0,
+    3,
+    0,
+    11,
+    0
+   ]
+  ],
+  "nurse": [
+   [
+    15,
+    11,
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    41,
+    8,
+    0,
+    0
+   ],
+   [
+    0,
+    4,
+    91,
+    11,
+    3
+   ],
+   [
+    0,
+    0,
+    6,
+    93,
+    3
+   ],
+   [
+    0,
+    0,
+    0,
+    2,
+    12
+   ]
+  ]
+ },
+ "reading": {
+  "fieldsChecked": 2859,
+  "correct": 99.9,
+  "invented": 0
+ },
+ "admitted": {
+  "byOurLevel": {
+   "1": 79,
+   "2": 43,
+   "3": 26,
+   "4": 10,
+   "5": 0
+  },
+  "byExpertLevel": {
+   "1": 77,
+   "2": 55,
+   "3": 39,
+   "4": 15,
+   "5": 0
+  },
+  "raised": [
+   {
+    "expertLevel": 3,
+    "raised": 44,
+    "kept": 33,
+    "raisedCount": 63,
+    "keptCount": 46
+   },
+   {
+    "expertLevel": 4,
+    "raised": 17,
+    "kept": 9,
+    "raisedCount": 69,
+    "keptCount": 33
+   }
+  ]
+ },
+ "destinationCorrect": 64.7,
+ "shifts": [
+  {
+   "name": "typical",
+   "perHour": 7,
+   "minutes": 240,
+   "runs": 20,
+   "arrivals": 30.7,
+   "firstCome": {
+    "waitByExpertLevel": {
+     "1": 0,
+     "2": 0.2,
+     "3": 0.2,
+     "4": 0.3,
+     "5": 0.8
+    },
+    "urgentWait": {
+     "avg": 0.2,
+     "p90": 0
+    },
+    "minorWait": 0.4,
+    "seen": 30.4,
+    "leftWithoutBeingSeen": 0,
+    "corridor": 0
+   },
+   "smart": {
+    "waitByExpertLevel": {
+     "1": 0,
+     "2": 0,
+     "3": 0.1,
+     "4": 0.3,
+     "5": 0.4
+    },
+    "urgentWait": {
+     "avg": 0,
+     "p90": 0
+    },
+    "minorWait": 0.3,
+    "seen": 30.6,
+    "leftWithoutBeingSeen": 0,
+    "corridor": 0.4
+   }
+  },
+  {
+   "name": "busy",
+   "perHour": 12,
+   "minutes": 240,
+   "runs": 20,
+   "arrivals": 52.2,
+   "firstCome": {
+    "waitByExpertLevel": {
+     "1": 19,
+     "2": 16.2,
+     "3": 16.3,
+     "4": 17.3,
+     "5": 17.7
+    },
+    "urgentWait": {
+     "avg": 16.6,
+     "p90": 45
+    },
+    "minorWait": 17.3,
+    "seen": 41.6,
+    "leftWithoutBeingSeen": 0,
+    "corridor": 0
+   },
+   "smart": {
+    "waitByExpertLevel": {
+     "1": 0,
+     "2": 0.5,
+     "3": 6.3,
+     "4": 14.1,
+     "5": 18.3
+    },
+    "urgentWait": {
+     "avg": 0.4,
+     "p90": 0
+    },
+    "minorWait": 14.5,
+    "seen": 47.2,
+    "leftWithoutBeingSeen": 0,
+    "corridor": 6
+   }
+  },
+  {
+   "name": "peak",
+   "perHour": 17,
+   "minutes": 240,
+   "runs": 20,
+   "arrivals": 72.6,
+   "firstCome": {
+    "waitByExpertLevel": {
+     "1": 39.9,
+     "2": 41.3,
+     "3": 41,
+     "4": 41.8,
+     "5": 40
+    },
+    "urgentWait": {
+     "avg": 41.2,
+     "p90": 92
+    },
+    "minorWait": 41.5,
+    "seen": 42.8,
+    "leftWithoutBeingSeen": 0,
+    "corridor": 0
+   },
+   "smart": {
+    "waitByExpertLevel": {
+     "1": 0.2,
+     "2": 2.7,
+     "3": 15.6,
+     "4": 35.6,
+     "5": 50.9
+    },
+    "urgentWait": {
+     "avg": 2.4,
+     "p90": 2
+    },
+    "minorWait": 37.5,
+    "seen": 56.2,
+    "leftWithoutBeingSeen": 0.6,
+    "corridor": 13.8
+   }
+  }
+ ]
+}

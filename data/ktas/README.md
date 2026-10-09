@@ -54,6 +54,11 @@ EVAL_GAP_MS=3000 node scripts/evaluate.ts 300
 
 AI answers are cached in `.ai-cache/`, so a rerun after an engine change costs no AI calls. `EVAL_GAP_MS` keeps the free Gemini tier under its per-minute limit.
 
+After an evaluation, rebuild the app's data:
+
+- `node scripts/replay.ts` writes the replay pool `src/er/replay.json`.
+- `node scripts/evidence.ts` writes the evidence page numbers `src/er/evidence.json`.
+
 ## Results (300 visits, 2026-10-10)
 
 Same 300 visits for all three, judged against `KTAS_expert`. The sample includes all 26 expert level 1 visits, so level 1 is over-represented compared with the full dataset.
@@ -68,5 +73,5 @@ Same 300 visits for all three, judged against `KTAS_expert`. The sample includes
 - **Reading:** the AI read 99.9% of 2,859 fields correctly and invented no vitals.
 - **Admission vs discharge:** predicted correctly for 65% of patients.
 - **Why we over-triage:** ESI treats possible heart attack, stroke signs, fainting, GI bleeding and new seizures as level 2 ("high-risk situations"), and counts an X-ray plus stitches as two resources (level 3). The Korean scale puts many of these one level lower.
-- **Raised patients were sicker:** expert level 3 patients we raised were admitted 44% of the time vs 32% for those we left at level 3; for expert level 4, 17% vs 9%. Admission rates also fall cleanly with our level: L1 78%, L2 43%, L3 25%, L4 9%, L5 0%.
+- **Raised patients were sicker:** expert level 3 patients we raised were admitted (ward, ICU, theatre or death) 44% of the time vs 33% for those we left at level 3; for expert level 4, 17% vs 9%. Admission rates also fall cleanly with our level: L1 79%, L2 43%, L3 26%, L4 10%, L5 0%.
 - **Every raised level shows its reason**, and the nurse can lower it.
