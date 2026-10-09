@@ -4,9 +4,13 @@ import type {
   Arrival,
   Bed,
   Capacity,
+  CareOrder,
+  CarePlan,
+  CareTask,
   CaseSource,
   Department,
   Doctor,
+  Frequency,
   Intake,
   Kpis,
   Level,
@@ -16,6 +20,10 @@ import type {
   Resource,
   Stage,
   SurgeCase,
+  TaskKind,
+  TaskRole,
+  TaskStatus,
+  TaskView,
   Vitals,
   Zone,
 } from "./types";
@@ -43,6 +51,44 @@ const GROUP: Record<Resource, string> = {
   procedure: "procedure",
   complex_procedure: "procedure",
 };
+
+export const TARGET_MINUTES: Record<Level, number> = { 1: 0, 2: 15, 3: 30, 4: 60, 5: 120 };
+
+export const INTERVAL_MINUTES: Record<Frequency, number | null> = {
+  once: null,
+  every_4h: 240,
+  every_6h: 360,
+  every_8h: 480,
+  every_12h: 720,
+  daily: 1440,
+  as_needed: null,
+};
+
+export const GRACE_MINUTES: Record<TaskKind, number> = {
+  see_doctor: 0,
+  medication: 30,
+  iv_fluids: 30,
+  dressing: 60,
+  vitals: 30,
+  review: 60,
+  test: 60,
+  other: 60,
+};
+
+export const TASK_ROLE: Record<TaskKind, TaskRole> = {
+  see_doctor: "doctor",
+  medication: "nurse",
+  iv_fluids: "nurse",
+  dressing: "nurse",
+  vitals: "nurse",
+  review: "doctor",
+  test: "nurse",
+  other: "nurse",
+};
+
+const PLAN_HORIZON = 24 * 60;
+const FIRST_TASK_AFTER = 15;
+const ACTIVE_AFTER_ER: Stage[] = ["admitted"];
 
 const isString = (f: string | false): f is string => typeof f === "string";
 const average = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -103,13 +149,22 @@ export function initialDepartment(policy: Policy = "smart"): Department {
     { id: "d9", name: "Dr. Zara Sheikh", specialty: "emergency", onShift: false },
   ];
 
+  const nurses = [
+    { id: "n1", name: "Nurse Rabia Aslam" },
+    { id: "n2", name: "Nurse Saima Javed" },
+    { id: "n3", name: "Nurse Tariq Mehmood" },
+    { id: "n4", name: "Nurse Mehwish Iqbal" },
+  ];
+
   return {
     now: 0,
     policy,
     patients: [],
     doctors,
+    nurses,
     beds: [...beds("resus", "R", 2), ...beds("acute", "A", 8), ...beds("fasttrack", "F", 6)],
     free: { ward: 4, icu: 1, theatre: 1 },
+    tasks: [],
   };
 }
 
@@ -131,6 +186,8 @@ export function admit(dept: Department, intake: Intake, needs: Needs, review: st
     seenAt: null,
     stageEndsAt: null,
     doneAt: null,
+    nurseId: leastBusyNurse(d),
+    plan: null,
     ...(source && { source }),
   });
 
@@ -183,6 +240,10 @@ export function apply(dept: Department, kind: ActionKind): Department {
 
   if (kind === "free_beds") d.free.ward += 2;
 
+  if (kind === "escalate_tasks") {
+    for (const t of d.tasks) if (taskStatus(d, t) === "overdue" && t.escalatedAt === null) t.escalatedAt = d.now;
+  }
+
   for (const p of d.patients) {
     if (kind === "redirect_minor" && p.stage === "waiting" && p.level >= 4) finish(d, p, "redirected");
     if (kind === "transfer" && p.stage === "awaiting_bed") finish(d, p, "transferred");
@@ -190,6 +251,78 @@ export function apply(dept: Department, kind: ActionKind): Department {
 
   allocateIn(d);
   return d;
+}
+
+export function planCare(dept: Department, patientId: string, draft: Omit<CarePlan, "confirmedAt">): Department {
+  const d = structuredClone(dept);
+  const p = d.patients.find((x) => x.id === patientId);
+  if (!p) return d;
+
+  p.plan = { ...draft, orders: [...draft.orders.map((o) => ({ ...o, suggested: false })), ...suggestOrders(p, draft.orders)], confirmedAt: null };
+  return d;
+}
+
+export function confirmPlan(dept: Department, patientId: string): Department {
+  const d = structuredClone(dept);
+  const p = d.patients.find((x) => x.id === patientId);
+  if (!p?.plan) return d;
+
+  p.plan.confirmedAt = d.now;
+  d.tasks = d.tasks.filter((t) => t.patientId !== p.id || t.doneAt !== null);
+  d.tasks.push(...scheduleOrders(d, p, p.plan.orders, d.now + FIRST_TASK_AFTER));
+  return d;
+}
+
+export function completeTask(dept: Department, taskId: string): Department {
+  const d = structuredClone(dept);
+  const task = d.tasks.find((t) => t.id === taskId);
+  if (task && task.doneAt === null) task.doneAt = d.now;
+  return d;
+}
+
+export function taskStatus(d: Department, t: CareTask): TaskStatus {
+  if (t.doneAt !== null) return "done";
+  if (d.now > t.dueAt + GRACE_MINUTES[t.kind]) return "overdue";
+  return d.now >= t.dueAt ? "due" : "upcoming";
+}
+
+export function rounds(d: Department): TaskView[] {
+  const order: Record<TaskStatus, number> = { overdue: 0, due: 1, upcoming: 2, done: 3 };
+  const patients = new Map(d.patients.map((p) => [p.id, p]));
+  const staff = new Map<string, string>([...d.doctors, ...d.nurses].map((x) => [x.id, x.name]));
+
+  const seeDoctor: CareTask[] = d.patients
+    .filter((p) => p.stage === "waiting")
+    .map((p) => ({
+      id: `see-${p.id}`,
+      patientId: p.id,
+      kind: "see_doctor",
+      title: `First doctor assessment (level ${p.level})`,
+      role: "doctor",
+      ownerId: null,
+      dueAt: p.arrivedAt + TARGET_MINUTES[p.level],
+      doneAt: null,
+      escalatedAt: null,
+      source: `Triage target for level ${p.level}: within ${TARGET_MINUTES[p.level]} minutes`,
+    }));
+
+  const care = d.tasks.filter((t) => {
+    const p = patients.get(t.patientId);
+    return p && (!isDone(p) || ACTIVE_AFTER_ER.includes(p.stage));
+  });
+
+  return [...seeDoctor, ...care]
+    .map((t) => {
+      const status = taskStatus(d, t);
+      return {
+        ...t,
+        status,
+        lateBy: status === "done" ? Math.max(0, (t.doneAt ?? 0) - t.dueAt) : Math.max(0, d.now - t.dueAt),
+        patientName: patients.get(t.patientId)?.name || "Unknown patient",
+        ownerName: t.ownerId ? (staff.get(t.ownerId) ?? "Unassigned") : t.role === "doctor" ? "Next free doctor" : "Ward nurse",
+      };
+    })
+    .sort((a, b) => order[a.status] - order[b.status] || a.dueAt - b.dueAt);
 }
 
 export function arrivalsFrom(cases: SurgeCase[], perHour: number, minutes: number, seed = 1): Arrival[] {
@@ -227,6 +360,9 @@ export function kpis(d: Department): Kpis {
   const byZone = (keep: (b: Bed) => boolean) =>
     Object.fromEntries(ZONES.map((z) => [z, d.beds.filter((b) => b.zone === z && keep(b)).length])) as Record<Zone, number>;
 
+  const list = rounds(d);
+  const done = list.filter((t) => t.status === "done");
+
   const timeToDoctor = Object.fromEntries(
     LEVELS.map((level) => {
       const times = seen.filter((p) => p.level === level).map((p) => (p.seenAt ?? p.arrivedAt) - p.arrivedAt);
@@ -248,6 +384,9 @@ export function kpis(d: Department): Kpis {
     corridor: d.patients.filter((p) => !p.bedId && p.stage !== "waiting" && !isDone(p)).length,
     leftWithoutBeingSeen: d.patients.filter((p) => p.stage === "left").length,
     free: { ...d.free },
+    tasksDue: list.filter((t) => t.status === "due").length,
+    tasksOverdue: list.filter((t) => t.status === "overdue").length,
+    tasksOnTime: done.length ? Math.round((done.filter((t) => t.lateBy <= GRACE_MINUTES[t.kind]).length / done.length) * 100) : null,
   };
 }
 
@@ -256,6 +395,9 @@ export function actions(d: Department): Action[] {
   const minor = d.patients.filter((p) => p.stage === "waiting" && p.level >= 4).length;
   const allBusy = k.doctorsBusy === k.doctorsOnShift;
   const hasBackup = d.doctors.some((doc) => !doc.onShift);
+  const late = rounds(d).filter((t) => t.kind !== "see_doctor" && t.status === "overdue" && t.escalatedAt === null);
+  const worst = late.sort((a, b) => b.lateBy - a.lateBy)[0];
+  const urgentLate = late.some((t) => t.kind === "medication" || t.kind === "iv_fluids");
 
   const list: (Action | false)[] = [
     k.criticalWaiting > 0 &&
@@ -282,6 +424,12 @@ export function actions(d: Department): Action[] {
         title: "No acute beds for critical patients",
         detail: `${k.corridor} patients are being treated on corridor trolleys and every acute bed is full. Open the overflow area.`,
       },
+    worst && {
+      kind: "escalate_tasks",
+      severity: urgentLate ? "critical" : "warning",
+      title: late.length === 1 ? "A care task is overdue" : `${late.length} care tasks are overdue`,
+      detail: `${worst.title} for ${worst.patientName} is ${worst.lateBy} minutes late (${worst.ownerName}). Escalate to the patient's doctor and the charge nurse.`,
+    },
     k.boarding >= 2 && {
       kind: "free_beds",
       severity: "warning",
@@ -318,6 +466,70 @@ export function isDone(p: Patient) {
 export function clock(minutes: number, start = 8 * 60) {
   const total = start + minutes;
   return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function leastBusyNurse(d: Department) {
+  const active = d.patients.filter((p) => !isDone(p) || ACTIVE_AFTER_ER.includes(p.stage));
+  const load = (id: string) => active.filter((p) => p.nurseId === id).length;
+  return [...d.nurses].sort((a, b) => load(a.id) - load(b.id))[0]?.id ?? null;
+}
+
+function careDoctor(d: Department, p: Patient) {
+  return p.doctorId ?? (d.doctors.find((doc) => doc.specialty === p.needs.specialty) ?? d.doctors.find((doc) => doc.specialty === "emergency"))?.id ?? null;
+}
+
+function suggestOrders(p: Patient, orders: CareOrder[]): CareOrder[] {
+  const has = (kind: CareOrder["kind"]) => orders.some((o) => o.kind === kind);
+  const list: CareOrder[] = [];
+
+  if (!has("vitals")) {
+    list.push({
+      kind: "vitals",
+      title: "Check vital signs",
+      frequency: p.level <= 2 ? "every_4h" : "every_8h",
+      source: `Suggested by our rules: level ${p.level} patients need vitals every ${p.level <= 2 ? 4 : 8} hours`,
+      suggested: true,
+    });
+  }
+
+  if (!has("review")) {
+    list.push({
+      kind: "review",
+      title: "Doctor review",
+      frequency: "daily",
+      source: "Suggested by our rules: every admitted patient needs a daily doctor review",
+      suggested: true,
+    });
+  }
+
+  return list;
+}
+
+function scheduleOrders(d: Department, p: Patient, orders: CareOrder[], start: number): CareTask[] {
+  const tasks: CareTask[] = [];
+
+  orders.forEach((o, i) => {
+    const every = INTERVAL_MINUTES[o.frequency];
+    if (o.frequency === "as_needed") return;
+
+    for (let at = start; at < start + PLAN_HORIZON; at += every ?? PLAN_HORIZON) {
+      tasks.push({
+        id: `${p.id}-o${i}-${at}`,
+        patientId: p.id,
+        kind: o.kind,
+        title: o.title,
+        role: TASK_ROLE[o.kind],
+        ownerId: TASK_ROLE[o.kind] === "nurse" ? p.nurseId : careDoctor(d, p),
+        dueAt: at,
+        doneAt: null,
+        escalatedAt: null,
+        source: o.suggested ? o.source : `From the notes: "${o.source}"`,
+      });
+      if (every === null) break;
+    }
+  });
+
+  return tasks;
 }
 
 function allocateIn(d: Department) {

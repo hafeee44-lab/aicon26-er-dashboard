@@ -1,0 +1,293 @@
+{
+ "67 saal mard, seene mein dard aur paseena, BP 88/60, pulse 112, sat 94": {
+  "intake": {
+   "name": "Unknown",
+   "age": 67,
+   "sex": "male",
+   "complaint": "Chest pain and sweating",
+   "vitals": {
+    "hr": 112,
+    "rr": null,
+    "sbp": 88,
+    "dbp": 60,
+    "spo2": 94,
+    "temp": null,
+    "pain": null,
+    "consciousness": null
+   },
+   "note": "67 saal mard, seene mein dard aur paseena, BP 88/60, pulse 112, sat 94"
+  },
+  "needs": {
+   "specialty": "cardiology",
+   "resources": [
+    "ecg",
+    "iv_fluids",
+    "iv_meds",
+    "labs",
+    "specialist"
+   ],
+   "destination": "icu",
+   "highRisk": true,
+   "reason": "Patient has chest pain with hypotension and tachycardia, suggesting a high-risk cardiac event requiring urgent evaluation."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "72 saal ki khatoon, saans phool rahi hai, sat 89, pulse 118, BP 100/70, thori confused": {
+  "intake": {
+   "name": "Unknown",
+   "age": 72,
+   "sex": "female",
+   "complaint": "Shortness of breath with confusion",
+   "vitals": {
+    "hr": 118,
+    "rr": null,
+    "sbp": 100,
+    "dbp": 70,
+    "spo2": 89,
+    "temp": null,
+    "pain": null,
+    "consciousness": "voice"
+   },
+   "note": "72 saal ki khatoon, saans phool rahi hai, sat 89, pulse 118, BP 100/70, thori confused"
+  },
+  "needs": {
+   "specialty": "medicine",
+   "resources": [
+    "labs",
+    "ecg",
+    "xray",
+    "iv_fluids",
+    "iv_meds"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "Elderly female with acute shortness of breath, hypoxia, and altered mental status requiring urgent medical evaluation and stabilization."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "8 mahine ki bachi, 2 din se tez bukhar 39.5, doodh nahi pee rahi, HR 170, susti": {
+  "intake": {
+   "name": "Unknown",
+   "age": 0.67,
+   "sex": "female",
+   "complaint": "High fever, poor feeding, and lethargy in an 8-month-old baby",
+   "vitals": {
+    "hr": 170,
+    "rr": null,
+    "sbp": null,
+    "dbp": null,
+    "spo2": null,
+    "temp": 39.5,
+    "pain": null,
+    "consciousness": "voice"
+   },
+   "note": "8 mahine ki bachi, 2 din se tez bukhar 39.5, doodh nahi pee rahi, HR 170, susti"
+  },
+  "needs": {
+   "specialty": "paediatrics",
+   "resources": [
+    "iv_fluids",
+    "iv_meds",
+    "labs"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "High fever, tachycardia, and lethargy in an infant require urgent paediatric evaluation and admission."
+  },
+  "review": [
+   "age"
+  ],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "28F, 34 weeks pregnant, vaginal bleeding for 1 hour, BP 100/60, HR 108, pain 6/10": {
+  "intake": {
+   "name": "Unknown",
+   "age": 28,
+   "sex": "female",
+   "complaint": "vaginal bleeding for 1 hour",
+   "vitals": {
+    "hr": 108,
+    "rr": null,
+    "sbp": 100,
+    "dbp": 60,
+    "spo2": null,
+    "temp": null,
+    "pain": 6,
+    "consciousness": null
+   },
+   "note": "28F, 34 weeks pregnant, vaginal bleeding for 1 hour, BP 100/60, HR 108, pain 6/10"
+  },
+  "needs": {
+   "specialty": "obgyn",
+   "resources": [
+    "ultrasound",
+    "labs",
+    "iv_fluids"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "Third trimester bleeding requires urgent obstetric evaluation and monitoring."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "22 saal ka larka, motorbike accident, right leg swelling aur deformity, pain 8/10, BP 130/80, pulse 96": {
+  "intake": {
+   "name": "Unknown",
+   "age": 22,
+   "sex": "male",
+   "complaint": "Motorbike accident with right leg swelling, deformity, and pain",
+   "vitals": {
+    "hr": 96,
+    "rr": null,
+    "sbp": 130,
+    "dbp": 80,
+    "spo2": null,
+    "temp": null,
+    "pain": 8,
+    "consciousness": null
+   },
+   "note": "22 saal ka larka, motorbike accident, right leg swelling aur deformity, pain 8/10, BP 130/80, pulse 96"
+  },
+  "needs": {
+   "specialty": "orthopaedics",
+   "resources": [
+    "xray",
+    "procedure",
+    "iv_meds"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "Traumatic leg injury requiring orthopedic evaluation, X-ray imaging, pain management, and likely fracture reduction or splinting."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "۴۵ سالہ خاتون، پیٹ کے دائیں نچلے حصے میں شدید درد، الٹیاں، بخار ۳۸.۵، نبض ۱۰۴": {
+  "intake": {
+   "name": "Unknown",
+   "age": 45,
+   "sex": "female",
+   "complaint": "Severe right lower quadrant abdominal pain, vomiting, and fever",
+   "vitals": {
+    "hr": 104,
+    "rr": null,
+    "sbp": null,
+    "dbp": null,
+    "spo2": null,
+    "temp": 38.5,
+    "pain": null,
+    "consciousness": null
+   },
+   "note": "۴۵ سالہ خاتون، پیٹ کے دائیں نچلے حصے میں شدید درد، الٹیاں، بخار ۳۸.۵، نبض ۱۰۴"
+  },
+  "needs": {
+   "specialty": "surgery",
+   "resources": [
+    "labs",
+    "ultrasound",
+    "iv_fluids",
+    "iv_meds"
+   ],
+   "destination": "ward",
+   "highRisk": false,
+   "reason": "Patient needs surgical evaluation, blood tests, ultrasound, and IV treatment for suspected acute appendicitis."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "50 saal ke uncle, 2 din se pait mein dard aur ultiyan, pain 5/10, BP 130/85, pulse 88, temp normal": {
+  "intake": {
+   "name": "Unknown",
+   "age": 50,
+   "sex": "male",
+   "complaint": "Abdominal pain and vomiting for 2 days",
+   "vitals": {
+    "hr": 88,
+    "rr": null,
+    "sbp": 130,
+    "dbp": 85,
+    "spo2": null,
+    "temp": null,
+    "pain": 5,
+    "consciousness": null
+   },
+   "note": "50 saal ke uncle, 2 din se pait mein dard aur ultiyan, pain 5/10, BP 130/85, pulse 88, temp normal"
+  },
+  "needs": {
+   "specialty": "emergency",
+   "resources": [
+    "iv_fluids",
+    "iv_meds",
+    "labs"
+   ],
+   "destination": "discharge",
+   "highRisk": false,
+   "reason": "Patient needs IV fluids, medication, and baseline labs for abdominal pain and vomiting."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "19F, football khelte hue ankle mur gaya, swelling, pain 4/10, chal sakti hai lekin langra ke": {
+  "intake": {
+   "name": "Unknown",
+   "age": 19,
+   "sex": "female",
+   "complaint": "Ankle injury while playing football with swelling and pain",
+   "vitals": {
+    "hr": null,
+    "rr": null,
+    "sbp": null,
+    "dbp": null,
+    "spo2": null,
+    "temp": null,
+    "pain": 4,
+    "consciousness": "alert"
+   },
+   "note": "19F, football khelte hue ankle mur gaya, swelling, pain 4/10, chal sakti hai lekin langra ke"
+  },
+  "needs": {
+   "specialty": "orthopaedics",
+   "resources": [
+    "xray"
+   ],
+   "destination": "discharge",
+   "highRisk": false,
+   "reason": "Patient has an acute ankle injury and needs an X-ray to rule out fracture."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "35M sore throat 2 days, no fever, vitals normal, eating and drinking fine": {
+  "intake": {
+   "name": "Unknown",
+   "age": 35,
+   "sex": "male",
+   "complaint": "Sore throat for 2 days, eating and drinking fine",
+   "vitals": {
+    "hr": null,
+    "rr": null,
+    "sbp": null,
+    "dbp": null,
+    "spo2": null,
+    "temp": null,
+    "pain": null,
+    "consciousness": "alert"
+   },
+   "note": "35M sore throat 2 days, no fever, vitals normal, eating and drinking fine"
+  },
+  "needs": {
+   "specialty": "emergency",
+   "resources": [],
+   "destination": "discharge",
+   "highRisk": false,
+   "reason": "Stable patient with sore throat can be managed in emergency and discharged."
+  },
+  "review": [
+   "consciousness"
+  ],
+  "model": "gemini-3.5-flash-lite"
+ }
+}
