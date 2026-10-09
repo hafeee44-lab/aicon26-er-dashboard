@@ -56,19 +56,20 @@ export function IntakePanel({ language, onAdmit, onClose }: Props) {
   const preview = parsed ? triage(parsed.intake, parsed.needs) : null;
 
   return (
-    <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900" role="dialog" aria-modal="true" aria-labelledby="intake-title">
+    <div className="intake-sheet flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="intake-title">
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 p-5 dark:border-slate-800">
         <div>
           <h2 id="intake-title" className="text-lg font-bold text-slate-950 dark:text-white">{copy.intakeTitle}</h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{copy.intakeHint}</p>
         </div>
-        <button type="button" onClick={onClose} className="grid size-8 place-items-center rounded-lg bg-slate-100 text-lg text-slate-500 hover:text-slate-950 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-white" aria-label="Close intake">×</button>
+        <button type="button" onClick={onClose} className="intake-close" aria-label="Close intake">×</button>
       </div>
 
       <div className="overflow-y-auto p-5">
         <label className="text-[10px] font-bold tracking-wide text-slate-500 uppercase" htmlFor="nurse-note">{copy.nurseNote}</label>
-        <textarea id="nurse-note" value={note} onChange={(event) => setNote(event.target.value)} rows={4} placeholder={copy.notePlaceholder} className="mt-2 w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-900 outline-none focus:border-[#353A96] focus:ring-4 focus:ring-[#353A96]/10 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-        <button type="button" onClick={readNote} disabled={loading || !note.trim()} className="mt-3 w-full rounded-xl bg-[#353A96] px-4 py-3 text-xs font-bold text-white disabled:opacity-50">{loading ? copy.reading : copy.readNote}</button>
+        <textarea id="nurse-note" value={note} onChange={(event) => setNote(event.target.value)} rows={4} placeholder={copy.notePlaceholder} className="intake-note mt-2 w-full resize-y p-3 text-sm leading-relaxed outline-none" />
+        <button type="button" onClick={() => setNote("72 saal aurat, bukhar, confusion, sat 89, pulse 108")} className="mt-2 rounded-full border border-[var(--border)] px-3 py-2 text-[10px] font-semibold text-[var(--muted)]">Try an example note</button>
+        <button type="button" onClick={readNote} disabled={loading || !note.trim()} className="primary-button mt-3 w-full disabled:opacity-50">{loading ? copy.reading : copy.readNote}</button>
         {error ? <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{error}</p> : null}
 
         {parsed && preview ? (
@@ -99,7 +100,7 @@ export function IntakePanel({ language, onAdmit, onClose }: Props) {
         ) : null}
       </div>
 
-      {parsed ? <div className="border-t border-slate-100 p-4 dark:border-slate-800"><button type="button" onClick={confirm} className="w-full rounded-xl bg-[#353A96] px-4 py-3 text-xs font-bold text-white">{copy.admit}</button></div> : null}
+      {parsed ? <div className="border-t border-slate-100 p-4 dark:border-slate-800"><button type="button" onClick={confirm} className="primary-button w-full">Add to queue</button></div> : null}
     </div>
   );
 }
