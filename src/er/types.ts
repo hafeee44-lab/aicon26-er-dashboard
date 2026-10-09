@@ -136,3 +136,48 @@ export type IntakeResponse = { intake: Intake; needs: Needs; review: string[]; m
 
 export type AdviseRequest = { kpis: Kpis; actions: Action[]; language: Language };
 export type AdviseResponse = { message: string; meta: StepMeta };
+
+export type TriageScore = {
+  n: number;
+  exact: number;
+  withinOne: number;
+  under: number;
+  over: number;
+  urgentTotal: number;
+  urgentMissed: number;
+};
+
+export type ShiftResult = {
+  waitByExpertLevel: Record<Level, number | null>;
+  urgentWait: { avg: number; p90: number };
+  minorWait: number;
+  seen: number;
+  leftWithoutBeingSeen: number;
+  corridor: number;
+};
+
+export type ShiftEvidence = {
+  name: "typical" | "busy" | "peak";
+  perHour: number;
+  minutes: number;
+  runs: number;
+  arrivals: number;
+  firstCome: ShiftResult;
+  smart: ShiftResult;
+};
+
+export type Evidence = {
+  source: string;
+  visits: number;
+  triage: { nurse: TriageScore; ours: TriageScore; codeOnly: TriageScore };
+  level1: { total: number; ours: number; nurse: number };
+  confusion: { ours: number[][]; nurse: number[][] };
+  reading: { fieldsChecked: number; correct: number; invented: number };
+  admitted: {
+    byOurLevel: Record<Level, number | null>;
+    byExpertLevel: Record<Level, number | null>;
+    raised: { expertLevel: Level; raised: number; kept: number; raisedCount: number; keptCount: number }[];
+  };
+  destinationCorrect: number;
+  shifts: ShiftEvidence[];
+};

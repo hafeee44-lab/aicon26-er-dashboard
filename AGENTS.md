@@ -63,10 +63,10 @@ Only if they say they are Hafi, use `Name: Hafi` / `Role: backend` and the `back
 | AI calls and prompts | backend | `src/lib/ai/**`, `src/er/prompts.ts` |
 | Triage, allocation, simulation | backend | `src/er/engine.ts` |
 | Note parsing and cleaning | backend | `src/er/intake.ts` |
-| Demo patients, datasets, scripts | backend | `src/er/mock.ts`, `data/**`, `scripts/**`, `public/evidence.json` |
+| Demo patients, datasets, evidence, scripts | backend | `src/er/mock.ts`, `src/er/replay.*`, `src/er/evidence.*`, `data/**`, `scripts/**` |
 | Screens and components | frontend | `src/components/**`, `src/app/**/page.tsx`, `src/app/layout.tsx`, `src/app/globals.css` |
 | Browser state | frontend | `src/er/useDepartment.ts` and any new `src/er/ui*.ts` helpers |
-| Static files | frontend | `public/**` except `public/evidence.json` |
+| Static files | frontend | `public/**` |
 | Contract | both, by agreement | `src/er/types.ts`, `src/lib/types.ts` |
 | Config and docs | both, by agreement | `package.json`, `package-lock.json`, config files, `*.md` |
 
@@ -138,7 +138,13 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [ ] **F5. Beds and doctors panel:** bed grid by zone (free or the patient's level colour) and the doctor list (free / busy with whom, specialty, backup off shift).
 - [ ] **F6. Actions panel:** each item from `actions(d)` with its severity colour and an **Apply** button calling `apply(d, kind)`. Below it, the advice box: a button that posts to `/api/advise` and shows the message, with an English / Urdu toggle (Urdu uses the `--font-nastaliq` font and right-to-left text).
 - [ ] **F7. Intake form:** a text box (optional: a mic button using the browser's built-in speech recognition, no new packages) → `POST /api/intake` → editable fields with the `review` ones highlighted in amber → live level preview from `triage(intake, needs)` with its flags → **Admit** calls `admit(d, intake, needs, review)`.
-- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: first come vs smart compared on the same arrivals. Until backend ships `public/evidence.json`, compute it in the browser: `simulate(arrivals, "first_come", 240)` vs `simulate(arrivals, "smart", 240)` and compare `kpis(...).timeToDoctor`, `corridor` and `leftWithoutBeingSeen`. Use `replayArrivals(ARRIVALS_PER_HOUR.busy, 240)` as the arrivals: real visits at a busy hour's rate.
+- [ ] **F8. Evidence page** `src/app/evidence/page.tsx`: `import { evidence } from "@/er/evidence"` (type `Evidence` in `src/er/types.ts`); everything is pre-computed, so there is no fetch or loading state. Four sections:
+  1. **Safer than triage nurses:** `evidence.triage` (nurse / ours / codeOnly) on 300 real visits. Lead with under-triage (`under`) and urgent patients missed (`urgentMissed` of `urgentTotal`), plus `evidence.level1` (critical patients caught: ours vs nurses). Show over-triage honestly, with this caption: "ESI rates possible heart attack, stroke and GI bleeding as level 2; the Korean experts often rated them 3".
+  2. **The AI reads notes accurately:** `evidence.reading` (`correct`% of `fieldsChecked`, `invented` = 0).
+  3. **Raised patients really were sicker:** `evidence.admitted.raised` (admitted % for raised vs kept) and `byOurLevel` as a falling bar chart.
+  4. **Smart allocation:** `evidence.shifts` (typical / busy / peak, each averaged over 20 simulated 4-hour shifts of real visits). Bars for first come vs smart: `urgentWait.avg`, `minorWait`, `seen`; also show `corridor`.
+
+  Credit the source under it: "Moon et al. 2019, PLOS ONE, CC BY 4.0".
 - [ ] **F9. Polish:** loading, empty and error states, the amber "rules" badge, phone layout, projector check (stand 3 m back), page title in `layout.tsx`.
 
 ### Backend (Hafi)
@@ -146,7 +152,7 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [x] **B1.** Contract, engine (triage, allocation, simulation, KPIs, actions), demo patients, `/api/intake`, `/api/advise`.
 - [ ] **B2.** Real triage dataset (Kaggle "Emergency Service – Triage Application", Moon et al. 2019) in `data/`, plus `scripts/evaluate.ts`: how often our triage under- and over-triages compared with the expert level, next to the nurses' 14.7%.
 - [x] **B3.** Replay pool: `src/er/replay.ts` with real anonymised visits (`replayCases`) and realistic arrival times (`replayArrivals`).
-- [ ] **B4.** `public/evidence.json`: first come vs smart on a replayed shift, and the accuracy numbers (shape agreed with frontend first, as a `CONTRACT:` change).
+- [x] **B4.** `src/er/evidence.ts`: accuracy, admission and shift numbers for the evidence page (`scripts/evidence.ts` regenerates it).
 - [ ] **B5.** Prompt tuning and warming the AI cache for the exact demo notes.
 - [ ] **B6.** Deploy to Vercel with the env vars, then README "Built during AICON'26" and third-party credits.
 
