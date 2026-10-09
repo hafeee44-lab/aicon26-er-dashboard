@@ -154,7 +154,7 @@ The look: a calm hospital control room on a projector. Large type, strong contra
 - [x] **B3.** Replay pool: `src/er/replay.ts` with real anonymised visits (`replayCases`) and realistic arrival times (`replayArrivals`).
 - [x] **B4.** `src/er/evidence.ts`: accuracy, admission and shift numbers for the evidence page (`scripts/evidence.ts` regenerates it).
 - [ ] **B5.** Prompt tuning and warming the AI cache for the exact demo notes.
-- [x] **B6.** Deployed to Vercel (link above); README results and third-party credits.
+- [x] **B6.** Deployed to Vercel (see Deploy below); README results and third-party credits.
 
 ## Deploy
 
