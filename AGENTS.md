@@ -145,7 +145,23 @@ Tick these off in your commits. Ask your teammate before starting a task from th
 
 ### Frontend (Haider)
 
-The look: a calm hospital control room on a projector. Large type, strong contrast, level colours used only for levels and alerts. It must also work on a phone.
+**UI redesign, 2026-10-10.** The app now runs on the "Instrument" UI in `src/components/command/` (state in `useCommand.ts`). It covers F1–F12 below: the board, intake, actions and AI brief, floor, rounds, care plans and evidence. The old components in `src/components/er/`, plus `src/er/useDepartment.ts`, `src/er/uiCopy.ts` and `src/er/uiPreferences.ts`, are no longer used. Don't build on them; delete them once nothing imports them. Build new UI inside `src/components/command/` and follow the design rules:
+
+- **Inspiration:** award-winning bedside monitors (Philips IntelliVue, GE CARESCAPE, Mindray) and hospital command centres. Numbers come first, and there is one level of navigation.
+- **Color only means something clinical:** triage levels (`lvl-1`…`lvl-5`), alarms (`text-alert`, `text-warn`) or vital-sign monitor colors (`text-hr` green, `text-spo2` cyan, `text-bp` red, `text-rr` yellow). Always pair a color with a text label.
+- **Everything else is ink:** use the tokens in `globals.css` (`bg-bg`, `bg-panel`, `bg-raised`, `border-line`, `text-ink`, `text-ink-2`, `text-ink-3`).
+- **No gradients, drop shadows, rounded-2xl cards or icon-in-a-circle tiles.** Use hairline borders and 2px corners.
+- **Type:** Atkinson Hyperlegible Next for text, `font-mono` (Atkinson Hyperlegible Mono) for every number and code, `.hand` (Caveat) only for words quoted from a chart, and `font-urdu` for Urdu.
+- **Themes:** `data-theme="monitor"` (dark, default) and `"paper"` (light). Every new color must be a token defined for both themes.
+- **Primitives:** `Button`, `Seg`, `LevelTile`, `Glyph`, `Badge`, `SectionHead` and `Micro` in `ui.tsx`.
+
+**Next for frontend:**
+
+- [ ] **F13. Urdu interface:** today only the AI brief and the notes can be Urdu. Add an EN / اردو switch for the labels (Nastaliq, right to left).
+- [ ] **F14. Accessibility pass:** keyboard through every overlay (a focus trap in the patient sheet and the intake console), plus screen-reader labels on the rounds markers.
+- [ ] **F15. Demo rehearsal on the projector:** both themes, 1280×720 and 1920×1080, and on a phone.
+
+The tasks below are the original plan, kept for the record; the redesign covers them.
 
 - [ ] **F1. State hook** `src/er/useDepartment.ts`: holds the `Department` (starts from `mockDepartment()`), a play/pause clock that calls `tick(d, 1)` every second, speed ×1 / ×5 / ×15, and `surge`, `admit`, `apply`, `setPolicy`, `reset`. Derives `kpis(d)` and `actions(d)`.
 - [ ] **F2. Dashboard page** `src/app/page.tsx` (replaces the old starter page): top bar with product name, clock (`clock(d.now)`), play/pause, speed, **Surge** button, policy toggle (first come / smart), reset. Surge offers "Demo cases" (`surgeCases`) and "Real cases" (the next 15 of `replayCases` on each press).
