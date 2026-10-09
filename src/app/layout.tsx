@@ -1,23 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Nastaliq_Urdu } from "next/font/google";
-import { defaultDomainId, domains } from "@/domains";
+import type { ReactNode } from "react";
+import { Noto_Nastaliq_Urdu, Poppins } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const nastaliq = Noto_Nastaliq_Urdu({ variable: "--font-nastaliq", subsets: ["arabic"], weight: ["400", "700"] });
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
-const domain = domains[defaultDomainId];
+const nastaliq = Noto_Nastaliq_Urdu({
+  variable: "--font-nastaliq",
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+});
 
 export const metadata: Metadata = {
-  title: `${domain.product} · ${domain.domainName}`,
-  description: domain.tagline,
+  title: "ER Command · AICON'26",
+  description: "AI-assisted emergency department operations dashboard for safer triage, allocation and surge response.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${nastaliq.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">{children}</body>
+    <html lang="en" className={`${poppins.variable} ${nastaliq.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

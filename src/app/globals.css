@@ -1,17 +1,79 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
-  --color-brand: var(--brand);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
   --font-urdu: var(--font-nastaliq);
 }
 
 :root {
-  --brand: #d97706;
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #f8f7ef;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--color-zinc-50);
-  color: var(--color-zinc-900);
+  min-height: 100vh;
+  margin: 0;
+  background: #f8f7ef;
+  color: #000000;
+  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: #ffefb4;
+  color: #353a96;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.65rem;
+  background: #f8fafc;
+  padding: 0.65rem 0.75rem;
+  color: #0f172a;
+  font-size: 0.75rem;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.field-input:focus {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 4px rgb(20 184 166 / 0.1);
+}
+
+.dark .field-input {
+  border-color: #334155;
+  background: #020617;
+  color: #f8fafc;
 }
