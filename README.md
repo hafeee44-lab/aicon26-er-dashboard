@@ -2,6 +2,8 @@
 
 Our project for the **Build with AI** module at AICON'26 (NUST). Assigned domain: **Health Operations**.
 
+**Live:** https://aicon26-er-dashboard-taupe.vercel.app
+
 Emergency departments in Pakistan run far over capacity (about 0.6 hospital beds per 1,000 people, one of the lowest rates in the world). Critical patients queue behind minor ones, patients wait on corridor trolleys, and nobody sees the whole floor at once. This dashboard helps the charge nurse decide **who is seen first, in which bed, by which doctor**, and what to do when the department is overwhelmed.
 
 ## What it does
