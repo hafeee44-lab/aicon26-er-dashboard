@@ -1,165 +1,149 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { IntakePanel } from "@/components/er/IntakePanel";
-import { clock, isBusy } from "@/er/engine";
-import { evidence } from "@/er/evidence";
-import type { Bed, Department, Level, Patient, Zone } from "@/er/types";
-import { useDepartment } from "@/er/useDepartment";
-import { useUiPreferences, type UiLanguage } from "@/er/uiPreferences";
+import { useEffect, useState } from "react";
+import { Alarms } from "@/components/command/Alarms";
+import { DoorBoard } from "@/components/command/DoorBoard";
+import { EvidenceView } from "@/components/command/EvidenceView";
+import { FloorPlan } from "@/components/command/FloorPlan";
+import { IntakeConsole } from "@/components/command/IntakeConsole";
+import { Params } from "@/components/command/Params";
+import { PatientSheet } from "@/components/command/PatientSheet";
+import { Rounds } from "@/components/command/Rounds";
+import { ShiftLog, TaskRow } from "@/components/command/Tasks";
+import { Nav, TopBar, VIEWS, type View } from "@/components/command/TopBar";
+import { Button, SectionHead } from "@/components/command/ui";
+import { useCommand } from "@/components/command/useCommand";
+import type { TaskView } from "@/er/types";
 
-type View = "overview" | "patients" | "resources" | "evidence";
-type Simulation = ReturnType<typeof useDepartment>;
-type IconName = "pulse" | "people" | "beds" | "chart" | "plus" | "search" | "sun" | "moon" | "chevron" | "close" | "play" | "pause" | "reset" | "spark" | "menu" | "arrow";
-
-const VIEWS: View[] = ["overview", "patients", "resources", "evidence"];
-const ZONES: { key: Zone | "corridor"; label: string }[] = [
-  { key: "resus", label: "Resus" },
-  { key: "acute", label: "Acute" },
-  { key: "fasttrack", label: "Fast track" },
-  { key: "corridor", label: "Corridor" },
-];
-const LEVELS: Record<Level, { color: string; en: string; ur: string; roman: string }> = {
-  1: { color: "#e5484d", en: "Immediate", ur: "فوری", roman: "Fori" },
-  2: { color: "#e98431", en: "Very urgent", ur: "بہت ضروری", roman: "Bohat zaroori" },
-  3: { color: "#c29a22", en: "Urgent", ur: "ضروری", roman: "Zaroori" },
-  4: { color: "#359c67", en: "Standard", ur: "معمول", roman: "Mamool" },
-  5: { color: "#4383d9", en: "Non-urgent", ur: "غیر فوری", roman: "Ghair fori" },
-};
-
-const COPY = {
-  en: {
-    overview: "Overview", patients: "Patients", resources: "Resources", evidence: "Evidence", search: "Search patients", newPatient: "New patient", live: "LIVE SHIFT", greeting: "The whole floor, at a glance.", intro: "See who needs help, where capacity sits, and why.", action: "Next best action", assign: "Assign a doctor", viewPatient: "View patient", clear: "No one needs immediate action.", clearHint: "Keep monitoring the floor as new patients arrive.", waiting: "Waiting to be seen", critical: "Critical waiting", beds: "Beds available", doctors: "Doctors busy", urgentWait: "Longest urgent wait", floor: "Floor map", floorHint: "Select an occupied bed to review its patient.", queue: "Priority queue", queueHint: "Most urgent patients appear first.", seeAll: "See all patients", attention: "Needs attention", actions: "Actions", simulate: "Simulate surge", demo: "Start shift", pause: "Pause shift", reset: "Reset", stable: "Calm", strained: "Busy", overloaded: "Overloaded", status: "Floor status", why: "Why this priority", suggested: "Suggested next step", unknown: "No recorded trigger; review the nurse note.", doctor: "Doctor", bed: "Bed", waitingStatus: "Waiting", withDoctor: "With doctor", diagnostics: "Tests in progress", boarding: "Waiting for a ward bed", all: "All", filter: "Filter patients", noFilter: "No patients match. Choose another filter.", note: "Nurse note", fields: "Recorded fields", missing: "Not recorded", review: "Needs confirmation", close: "Close", done: "Done", active: "On shift", backup: "Backup", callBackup: "Call backup doctor", available: "Available", busy: "With patient", smart: "Smart order", arrival: "Arrival order", smartHint: "Most urgent patients first.", arrivalHint: "Oldest arrival first.", source: "Source", evidenceTitle: "The difference, measured.", evidenceIntro: "Same arrivals and staffing. Two ways to order care.", retrospective: "Retrospective analysis of 300 de-identified visits (Moon et al. 2019, PLOS ONE, CC BY 4.0). Decision support only; not clinically validated. A clinician makes every final decision.", undo: "Undo", updated: "Updated", noAlerts: "No operational alerts right now.", metricMissed: "Urgent cases missed", metricCaught: "Level-one cases caught", metricPeak: "Peak urgent wait", metricFields: "Fields read correctly", nurses: "Nurse record", engine: "ER Command", firstCome: "First come", smartShort: "Smart", min: "min", replay: "Replay comparison", searchHint: "Type a name or complaint", noSearch: "No matching patient. Try another name.", details: "Patient details", help: "Triage levels", free: "free", occupied: "occupied", of: "of", rule: "Rule", confirm: "Confirm and add", language: "Language", theme: "Theme",
-  },
-  ur: {
-    overview: "جائزہ", patients: "مریض", resources: "وسائل", evidence: "ثبوت", search: "مریض تلاش کریں", newPatient: "نیا مریض", live: "جاری شفٹ", greeting: "پورا شعبہ ایک نظر میں۔", intro: "دیکھیں کس کو مدد چاہیے اور کیوں۔", action: "اگلا ضروری قدم", assign: "ڈاکٹر مقرر کریں", viewPatient: "مریض دیکھیں", clear: "ابھی کسی فوری اقدام کی ضرورت نہیں۔", clearHint: "نئے مریض آنے پر نگرانی جاری رکھیں۔", waiting: "معائنے کے منتظر", critical: "سنگین منتظر", beds: "دستیاب بیڈ", doctors: "مصروف ڈاکٹر", urgentWait: "طویل فوری انتظار", floor: "شعبے کا نقشہ", floorHint: "تفصیل کے لیے بیڈ منتخب کریں۔", queue: "ترجیحی قطار", queueHint: "شدید مریض پہلے دکھائے جاتے ہیں۔", seeAll: "تمام مریض دیکھیں", attention: "توجہ درکار", actions: "اقدامات", simulate: "رش کی نقل", demo: "شفٹ شروع", pause: "شفٹ روکیں", reset: "دوبارہ شروع", stable: "پرسکون", strained: "مصروف", overloaded: "بہت مصروف", status: "شعبے کی حالت", why: "یہ ترجیح کیوں", suggested: "تجویز کردہ قدم", unknown: "وجہ درج نہیں؛ نرس کا نوٹ دیکھیں۔", doctor: "ڈاکٹر", bed: "بیڈ", waitingStatus: "منتظر", withDoctor: "ڈاکٹر کے ساتھ", diagnostics: "ٹیسٹ جاری ہیں", boarding: "وارڈ بیڈ کے منتظر", all: "سب", filter: "مریض چھانٹیں", noFilter: "یہاں مریض نہیں؛ دوسرا فلٹر چنیں۔", note: "نرس کا نوٹ", fields: "درج شدہ معلومات", missing: "درج نہیں", review: "تصدیق درکار", close: "بند", done: "مکمل", active: "ڈیوٹی پر", backup: "بیک اپ", callBackup: "بیک اپ ڈاکٹر بلائیں", available: "دستیاب", busy: "مریض کے ساتھ", smart: "طبی ترجیح", arrival: "آمد کی ترتیب", smartHint: "زیادہ ضروری مریض پہلے۔", arrivalHint: "پہلے آنے والا پہلے۔", source: "ماخذ", evidenceTitle: "فرق، اعداد کے ساتھ۔", evidenceIntro: "وہی مریض اور عملہ؛ دو ترتیبیں۔", retrospective: "300 گمنام وزٹس کا سابقہ جائزہ (Moon et al. 2019, PLOS ONE, CC BY 4.0)۔ یہ صرف فیصلے میں مدد ہے؛ طبی توثیق نہیں ہوئی۔ آخری فیصلہ معالج کرتا ہے۔", undo: "واپس", updated: "تبدیل ہو گیا", noAlerts: "ابھی کوئی آپریشنل الرٹ نہیں۔", metricMissed: "چھوٹے ہوئے فوری کیس", metricCaught: "پہچانے گئے لیول ایک", metricPeak: "زیادہ سے زیادہ انتظار", metricFields: "درست پڑھی گئی معلومات", nurses: "نرس کا ریکارڈ", engine: "ای آر کمانڈ", firstCome: "پہلے آنے والے", smartShort: "سمارٹ", min: "منٹ", replay: "موازنہ دیکھیں", searchHint: "نام یا مسئلہ لکھیں", noSearch: "مریض نہیں ملا؛ دوسرا نام آزمائیں۔", details: "مریض کی تفصیل", help: "ترجیحی درجات", free: "خالی", occupied: "مصروف", of: "میں سے", rule: "قاعدہ", confirm: "تصدیق اور اندراج", language: "زبان", theme: "رنگ",
-  },
-  roman: {
-    overview: "Khulasa", patients: "Mareez", resources: "Wasail", evidence: "Saboot", search: "Mareez dhoondein", newPatient: "Naya mareez", live: "Live shift", greeting: "Poora floor aik nazar mein.", intro: "Dekhein kis ko madad chahiye aur kyun.", action: "Agla zaroori qadam", assign: "Doctor muqarrar karein", viewPatient: "Mareez dekhein", clear: "Abhi foran kaam ki zaroorat nahi.", clearHint: "Naye mareez par nazar rakhein.", waiting: "Checkup ke muntazir", critical: "Sangeen muntazir", beds: "Khali beds", doctors: "Masroof doctors", urgentWait: "Lamba urgent wait", floor: "Floor map", floorHint: "Tafseel ke liye bed chunein.", queue: "Tarjeeh ki qatar", queueHint: "Zyada sangeen mareez pehle.", seeAll: "Sab mareez dekhein", attention: "Tawajjo darkar", actions: "Aqdamat", simulate: "Rush chalayein", demo: "Shift shuru", pause: "Shift rokein", reset: "Reset", stable: "Pur-sukoon", strained: "Masroof", overloaded: "Bohat masroof", status: "Floor ki halat", why: "Yeh tarjeeh kyun", suggested: "Agla qadam", unknown: "Wajah darj nahi; nurse note dekhein.", doctor: "Doctor", bed: "Bed", waitingStatus: "Muntazir", withDoctor: "Doctor ke saath", diagnostics: "Tests jaari", boarding: "Ward bed ke muntazir", all: "Sab", filter: "Mareez chunein", noFilter: "Yahan mareez nahi; aur filter chunein.", note: "Nurse note", fields: "Darj maloomat", missing: "Darj nahi", review: "Tasdeeq chahiye", close: "Band", done: "Mukammal", active: "Duty par", backup: "Backup", callBackup: "Backup doctor bulayein", available: "Dastiyab", busy: "Mareez ke saath", smart: "Urgency order", arrival: "Arrival order", smartHint: "Zyada zaroori mareez pehle.", arrivalHint: "Pehle aane wala pehle.", source: "Source", evidenceTitle: "Farq, numbers ke saath.", evidenceIntro: "Wohi mareez aur staff; do tarteebein.", retrospective: "300 be-naam visits ka retrospective jaiza (Moon et al. 2019, PLOS ONE, CC BY 4.0). Yeh sirf faislay mein madad hai; clinical validation nahi hui. Aakhri faisla doctor karta hai.", undo: "Wapas", updated: "Tabdeel ho gaya", noAlerts: "Abhi koi operational alert nahi.", metricMissed: "Miss urgent cases", metricCaught: "Level-one pakray", metricPeak: "Peak urgent wait", metricFields: "Sahi parhi fields", nurses: "Nurse record", engine: "ER Command", firstCome: "Pehle aaye", smartShort: "Smart", min: "min", replay: "Comparison dekhein", searchHint: "Naam ya complaint likhein", noSearch: "Mareez nahi mila; aur naam likhein.", details: "Mareez ki tafseel", help: "Triage levels", free: "Khali", occupied: "Masroof", of: "mein se", rule: "Rule", confirm: "Tasdeeq aur add", language: "Zaban", theme: "Theme",
-  },
-} as const;
-type Copy = { [K in keyof typeof COPY.en]: string };
-
-function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
-  const paths: Record<IconName, React.ReactNode> = {
-    pulse: <><path d="M2 12h4l2.4-5 3.2 10 2.5-5H22" /></>,
-    people: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20v-2a5.5 5.5 0 0 1 11 0v2M17 5a3 3 0 0 1 0 6m1.5 4a5 5 0 0 1 2 4v1" /></>,
-    beds: <><path d="M3 20V8m0 8h18v4M3 10h18v6H3m4-6V6h7a4 4 0 0 1 4 4" /></>,
-    chart: <><path d="M4 19V5m0 14h16M7 15l4-5 3 2 5-6" /><circle cx="19" cy="6" r="1" /></>,
-    plus: <path d="M12 5v14M5 12h14" />,
-    search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
-    sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
-    moon: <path d="M20.5 14.7A8.5 8.5 0 0 1 9.3 3.5a8.5 8.5 0 1 0 11.2 11.2Z" />,
-    chevron: <path d="m7 10 5 5 5-5" />,
-    close: <path d="M5 5l14 14M19 5 5 19" />,
-    play: <path d="m8 5 11 7-11 7V5Z" />,
-    pause: <><path d="M8 5v14M16 5v14" /></>,
-    reset: <><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" /></>,
-    spark: <><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2Zm7 14 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" /></>,
-    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
-    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
-  };
-  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
-}
-
-const active = (patient: Patient) => !["admitted", "discharged", "left", "redirected", "transferred"].includes(patient.stage);
-const initials = (name: string) => name.replace(/[()]/g, " ").replace(/[^\p{L}\s'-]/gu, " ").trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase() ?? "").join("");
-const waitMinutes = (patient: Patient, department: Department) => Math.max(0, Math.round((patient.seenAt ?? department.now) - patient.arrivedAt));
-const levelName = (level: Level, language: UiLanguage) => `L${level} ${LEVELS[level][language]}`;
-const statusName = (stage: Patient["stage"], copy: Copy) => stage === "waiting" ? copy.waitingStatus : stage === "with_doctor" ? copy.withDoctor : stage === "awaiting_results" ? copy.diagnostics : copy.boarding;
+const TYPING = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 export default function Home() {
-  const simulation = useDepartment();
-  const preferences = useUiPreferences();
-  const language = preferences.language;
-  const copy = COPY[language];
-  const [view, setView] = useState<View>("overview");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const cmd = useCommand();
+  const [view, setView] = useState<View>("command");
+  const [openId, setOpenId] = useState<string | null>(null);
   const [intakeOpen, setIntakeOpen] = useState(false);
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [toast, setToast] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
-  const patients = useMemo(() => simulation.department.patients.filter(active).toSorted((a, b) => a.level - b.level || a.arrivedAt - b.arrivedAt), [simulation.department.patients]);
-  const selected = patients.find((patient) => patient.id === selectedId) ?? patients[0] ?? null;
-  const showToast = useCallback((message: string) => { setToast(message); window.setTimeout(() => setToast(""), 5000); }, []);
-  const choose = (patient: Patient) => { setSelectedId(patient.id); setDrawerOpen(true); };
-  const switchView = useCallback((next: View) => { setView(next); setMenuOpen(false); setPaletteOpen(false); }, []);
+  const { togglePlaying } = cmd;
+  const overlay = intakeOpen || openId !== null;
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const typing = ["INPUT", "TEXTAREA"].includes((event.target as HTMLElement)?.tagName);
-      if (event.key === "Escape") { setDrawerOpen(false); setIntakeOpen(false); setPaletteOpen(false); setMenuOpen(false); }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); setPaletteOpen(true); }
-      if (!typing && !event.metaKey && !event.ctrlKey && event.key >= "1" && event.key <= "4") switchView(VIEWS[Number(event.key) - 1]);
-      if (!typing && event.key === "/") { event.preventDefault(); switchView("patients"); window.setTimeout(() => searchRef.current?.focus(), 0); }
-    };
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIntakeOpen(false);
+        setOpenId(null);
+        return;
+      }
+      if (overlay || e.metaKey || e.ctrlKey || e.altKey || TYPING.has((e.target as HTMLElement).tagName)) return;
+      const v = VIEWS.find((x) => x.key === e.key);
+      if (v) setView(v.id);
+      if (e.key === "n" || e.key === "N") {
+        e.preventDefault();
+        setIntakeOpen(true);
+      }
+      if (e.key === " " && (e.target as HTMLElement).tagName !== "BUTTON") {
+        e.preventDefault();
+        togglePlaying();
+      }
+    }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [switchView]);
+  }, [overlay, togglePlaying]);
 
-  const waiting = patients.filter((patient) => patient.stage === "waiting");
-  const critical = waiting.filter((patient) => patient.level === 1);
-  const occupied = simulation.department.beds.filter((bed) => bed.patientId).length;
-  const free = simulation.department.beds.length - occupied;
-  const floorStatus = critical.length > 0 || free <= 1 ? "overloaded" : waiting.length >= 5 || free <= 4 ? "strained" : "stable";
+  const patient = cmd.dept.patients.find((p) => p.id === openId);
+  const done = (t: TaskView) => cmd.complete(t.id, `${t.title} for ${t.patientName}`);
+  const ward = cmd.tasks.filter((t) => t.kind !== "see_doctor" && (t.status === "overdue" || t.status === "due" || (t.status === "upcoming" && t.dueAt - cmd.dept.now <= 120)));
+  const wardLate = ward.filter((t) => t.status === "overdue").length;
 
-  return <div className={`app-root ${preferences.theme === "dark" ? "dark" : "light"} ${language === "ur" ? "urdu" : ""}`} dir={language === "ur" ? "rtl" : "ltr"}>
-    <header className="app-header"><div className="header-inner">
-      <button type="button" className="brand" onClick={() => switchView("overview")} aria-label="ER Command overview"><span className="brand-mark"><Icon name="pulse" size={23} /></span><span><strong>ER Command</strong><small>Emergency operations</small></span></button>
-      <nav className="top-nav" aria-label="Main navigation">{VIEWS.map((item) => <button key={item} type="button" aria-current={view === item ? "page" : undefined} className={view === item ? "nav-item active" : "nav-item"} onClick={() => switchView(item)}><Icon name={item === "overview" ? "pulse" : item === "patients" ? "people" : item === "resources" ? "beds" : "chart"} size={17} /><span>{copy[item]}</span></button>)}</nav>
-      <div className="header-actions"><button type="button" className="icon-button search-trigger" aria-label={copy.search} title="Search (⌘K)" onClick={() => setPaletteOpen(true)}><Icon name="search" /></button><button type="button" className="language-button" onClick={() => preferences.changeLanguage(language === "en" ? "ur" : language === "ur" ? "roman" : "en")} aria-label={copy.language}>{language === "en" ? "EN" : language === "ur" ? "اردو" : "Roman"}<Icon name="chevron" size={14} /></button><button type="button" className="icon-button" onClick={() => preferences.changeTheme(preferences.theme === "light" ? "dark" : "light")} aria-label={copy.theme} title={copy.theme}><Icon name={preferences.theme === "light" ? "moon" : "sun"} /></button><button type="button" className="primary-button header-add" onClick={() => setIntakeOpen(true)}><Icon name="plus" size={17} />{copy.newPatient}</button><button type="button" className="icon-button mobile-menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Open menu" aria-expanded={menuOpen}><Icon name="menu" /></button></div>
-    </div></header>
-    {menuOpen ? <div className="mobile-menu"><button type="button" onClick={() => { setPaletteOpen(true); setMenuOpen(false); }}>{copy.search}</button><button type="button" onClick={() => { preferences.changeLanguage(language === "en" ? "ur" : language === "ur" ? "roman" : "en"); setMenuOpen(false); }}>{copy.language}: {language.toUpperCase()}</button><button type="button" onClick={() => { preferences.changeTheme(preferences.theme === "light" ? "dark" : "light"); setMenuOpen(false); }}>{copy.theme}</button><button type="button" onClick={() => { setIntakeOpen(true); setMenuOpen(false); }}>{copy.newPatient}</button></div> : null}
-    <main className="app-main">
-      {view === "overview" ? <Overview simulation={simulation} copy={copy} language={language} patients={patients} waiting={waiting} free={free} floorStatus={floorStatus} onSelect={choose} onView={switchView} onIntake={() => setIntakeOpen(true)} onToast={showToast} /> : null}
-      {view === "patients" ? <PatientsView simulation={simulation} copy={copy} language={language} patients={patients} search={search} setSearch={setSearch} searchRef={searchRef} onSelect={choose} /> : null}
-      {view === "resources" ? <ResourcesView simulation={simulation} copy={copy} onToast={showToast} /> : null}
-      {view === "evidence" ? <EvidenceView copy={copy} /> : null}
-    </main>
-    <nav className="bottom-nav" aria-label="Main navigation">{VIEWS.map((item) => <button key={item} type="button" aria-current={view === item ? "page" : undefined} className={view === item ? "bottom-item active" : "bottom-item"} onClick={() => switchView(item)}><Icon name={item === "overview" ? "pulse" : item === "patients" ? "people" : item === "resources" ? "beds" : "chart"} size={20} /><span>{copy[item]}</span></button>)}</nav>
-    {drawerOpen && selected ? <PatientDrawer patient={selected} department={simulation.department} copy={copy} language={language} onClose={() => setDrawerOpen(false)} onAction={() => { simulation.applyAction("call_doctor"); showToast(copy.updated); }} /> : null}
-    {intakeOpen ? <div className="modal-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) setIntakeOpen(false); }}><IntakePanel language={language} onAdmit={(intake, needs, review) => { simulation.admitPatient(intake, needs, review); setIntakeOpen(false); showToast(copy.updated); }} onClose={() => setIntakeOpen(false)} /></div> : null}
-    {paletteOpen ? <div className="modal-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) setPaletteOpen(false); }}><div className="command-palette" role="dialog" aria-modal="true" aria-label={copy.search}><div className="palette-input"><Icon name="search" /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.searchHint} /></div><div className="palette-results">{patients.filter((patient) => `${patient.name} ${patient.complaint}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())).slice(0, 7).map((patient) => <button key={patient.id} type="button" onClick={() => { choose(patient); setPaletteOpen(false); }}><Avatar patient={patient} /><span><strong>{patient.name}</strong><small>{patient.complaint}</small></span><LevelBadge level={patient.level} language={language} /></button>)}</div></div></div> : null}
-    {toast ? <div className="toast" role="status">{toast}</div> : null}
-  </div>;
+  return (
+    <div className="min-h-screen pb-16 lg:pb-0">
+      <TopBar cmd={cmd} view={view} onView={setView} onNew={() => setIntakeOpen(true)} />
+
+      {view === "command" && (
+        <main>
+          <Params dept={cmd.dept} kpis={cmd.kpis} />
+          <div className="grid xl:grid-cols-[minmax(0,1fr)_420px]">
+            <div className="min-w-0 border-line xl:border-r">
+              <div className="flex min-h-[300px] flex-col xl:max-h-[62vh]">
+                <DoorBoard dept={cmd.dept} onOpen={setOpenId} />
+              </div>
+              <section aria-label="Ward tasks" className="border-t border-line">
+                <SectionHead
+                  index="03"
+                  title="On the ward"
+                  aside={
+                    <>
+                      <span className={`font-mono text-[11px] ${wardLate ? "text-alert" : "text-ink-3"}`}>{wardLate ? `${wardLate} late` : "on time"}</span>
+                      <Button size="sm" onClick={() => setView("rounds")}>
+                        Rounds
+                      </Button>
+                    </>
+                  }
+                />
+                {ward.length ? (
+                  <ul>
+                    {ward.slice(0, 8).map((t) => (
+                      <TaskRow key={t.id} t={t} now={cmd.dept.now} onDone={done} onOpen={setOpenId} />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="px-4 py-6 text-[13px] text-ink-3">No ward tasks are due in the next two hours.</p>
+                )}
+              </section>
+            </div>
+            <aside className="border-t border-line xl:border-t-0">
+              <Alarms actions={cmd.actions} kpis={cmd.kpis} onApply={cmd.apply} />
+              <section aria-label="Shift log" className="border-t border-line">
+                <SectionHead index="04" title="Shift log" />
+                <ShiftLog log={cmd.log} />
+              </section>
+            </aside>
+          </div>
+        </main>
+      )}
+
+      {view === "floor" && (
+        <main>
+          <FloorPlan dept={cmd.dept} tasks={cmd.tasks} onOpen={setOpenId} />
+        </main>
+      )}
+
+      {view === "rounds" && (
+        <main>
+          <Rounds dept={cmd.dept} tasks={cmd.tasks} onDone={done} onOpen={setOpenId} />
+        </main>
+      )}
+
+      {view === "evidence" && (
+        <main>
+          <EvidenceView />
+        </main>
+      )}
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg lg:hidden">
+        <Nav view={view} onView={setView} className="grid h-14 grid-cols-4" />
+      </div>
+
+      {intakeOpen && (
+        <IntakeConsole
+          onClose={() => setIntakeOpen(false)}
+          onAdmit={(intake, needs, review) => {
+            cmd.admit(intake, needs, review);
+            setIntakeOpen(false);
+            setView("command");
+          }}
+        />
+      )}
+
+      {patient && (
+        <PatientSheet
+          dept={cmd.dept}
+          patient={patient}
+          tasks={cmd.tasks}
+          onClose={() => setOpenId(null)}
+          onPlan={(draft) => cmd.plan(patient.id, draft)}
+          onConfirm={() => cmd.confirm(patient.id, patient.name)}
+          onDone={done}
+        />
+      )}
+    </div>
+  );
 }
-
-function Avatar({ patient, size = "normal" }: { patient: Patient; size?: "normal" | "large" }) { return <span className={`avatar ${size === "large" ? "large" : ""}`} style={{ background: `${LEVELS[patient.level].color}16`, color: LEVELS[patient.level].color }}>{initials(patient.name)}</span>; }
-function LevelBadge({ level, language }: { level: Level; language: UiLanguage }) { return <span className="level-badge" style={{ color: LEVELS[level].color, background: `${LEVELS[level].color}16` }}><span className="level-dot" style={{ background: LEVELS[level].color }} />{levelName(level, language)}</span>; }
-
-function Overview({ simulation, copy, language, patients, waiting, free, floorStatus, onSelect, onView, onIntake, onToast }: { simulation: Simulation; copy: Copy; language: UiLanguage; patients: Patient[]; waiting: Patient[]; free: number; floorStatus: "stable" | "strained" | "overloaded"; onSelect: (patient: Patient) => void; onView: (view: View) => void; onIntake: () => void; onToast: (message: string) => void }) {
-  const next = waiting[0] ?? patients[0];
-  const urgentWait = waiting.filter((patient) => patient.level <= 2).reduce((max, patient) => Math.max(max, waitMinutes(patient, simulation.department)), 0);
-  const critical = waiting.filter((patient) => patient.level === 1).length;
-  const busyDoctors = simulation.department.doctors.filter((doctor) => doctor.onShift && isBusy(simulation.department, doctor)).length;
-  return <section className="view-stack">
-    <div className="page-lead"><div><div className="eyebrow"><span className="live-dot" />{copy.live} <span className="eyebrow-divider" /> {clock(simulation.department.now)}</div><h1>{copy.greeting}</h1><p>{copy.intro}</p></div><div className="lead-actions"><button type="button" className="secondary-button" onClick={() => { simulation.triggerSurge("demo"); onToast(copy.updated); }}><Icon name="spark" size={17} />{copy.simulate}</button><button type="button" className="secondary-button" onClick={() => simulation.setPlaying(!simulation.playing)}><Icon name={simulation.playing ? "pause" : "play"} size={17} />{simulation.playing ? copy.pause : copy.demo}</button><button type="button" className="icon-button reset-button" onClick={() => { simulation.reset(); onToast(copy.updated); }} aria-label={copy.reset} title={copy.reset}><Icon name="reset" /></button></div></div>
-    <div className={`decision-banner ${floorStatus}`}><div className="decision-icon"><Icon name="pulse" size={24} /></div><div className="decision-copy"><span className="section-kicker">{copy.action}</span><strong>{next ? next.name : copy.clear}</strong><p>{next ? next.vitals.spo2 !== null && next.vitals.spo2 < 90 ? `Oxygen ${next.vitals.spo2}% · ${levelName(next.level, language)}` : `${levelName(next.level, language)} · ${next.complaint}` : copy.clearHint}</p></div>{next ? <button type="button" className="decision-button" onClick={() => onSelect(next)}>{copy.viewPatient}<Icon name="arrow" size={17} /></button> : <button type="button" className="decision-button" onClick={onIntake}>{copy.newPatient}<Icon name="plus" size={17} /></button>}</div>
-    <div className="metrics-row"><Metric value={waiting.length} label={copy.waiting} detail={`${critical} ${copy.critical.toLocaleLowerCase()}`} trend={critical > 0 ? "danger" : "normal"} icon="people" /><Metric value={urgentWait} suffix={copy.min} label={copy.urgentWait} detail={urgentWait >= 30 ? copy.attention : copy.stable} trend={urgentWait >= 30 ? "danger" : "normal"} icon="pulse" /><Metric value={free} label={copy.beds} detail={`${simulation.department.beds.length} ${copy.of} ${copy.beds.toLocaleLowerCase()}`} icon="beds" /><Metric value={`${busyDoctors}/${simulation.kpis.doctorsOnShift}`} label={copy.doctors} detail={copy.active} icon="people" /></div>
-    <div className="overview-grid"><FloorMap department={simulation.department} copy={copy} language={language} selectedId={next?.id ?? null} onSelect={onSelect} /><PriorityPanel patient={next ?? null} copy={copy} language={language} onSelect={onSelect} /></div>
-    <div className="overview-lower"><QueuePanel patients={patients} department={simulation.department} copy={copy} language={language} onSelect={onSelect} onView={onView} /><AlertsPanel simulation={simulation} copy={copy} onToast={onToast} /></div>
-  </section>;
-}
-
-function Metric({ value, suffix, label, detail, trend = "normal", icon }: { value: string | number; suffix?: string; label: string; detail: string; trend?: "normal" | "danger"; icon: IconName }) { return <article className="metric-card"><div className="metric-top"><span className="metric-icon"><Icon name={icon} size={19} /></span><span className="metric-signal" /></div><div className="metric-number"><span className={trend === "danger" ? "danger-text" : ""}>{value}</span>{suffix ? <small>{suffix}</small> : null}</div><h2>{label}</h2><p>{detail}</p></article>; }
-
-function FloorMap({ department, copy, language, selectedId, onSelect }: { department: Department; copy: Copy; language: UiLanguage; selectedId: string | null; onSelect: (patient: Patient) => void }) { const byId = new Map(department.patients.map((patient) => [patient.id, patient])); return <section className="panel floor-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.floor}</span><h2>{copy.floor}</h2><p>{copy.floorHint}</p></div><span className="heading-meta"><span className="live-dot" />{department.beds.filter((bed) => !bed.patientId).length} {copy.free}</span></div><div className="zone-grid">{ZONES.map(({ key, label }) => <div className="zone" key={key}><div className="zone-heading"><strong>{key === "corridor" ? `${label} · no bed` : label}</strong><small>{department.beds.filter((bed) => bed.zone === key && !bed.patientId).length}/{department.beds.filter((bed) => bed.zone === key).length} {copy.free}</small></div><div className="bed-grid">{department.beds.filter((bed) => bed.zone === key).map((bed) => <BedTile key={bed.id} bed={bed} patient={bed.patientId ? byId.get(bed.patientId) ?? null : null} department={department} copy={copy} language={language} selected={bed.patientId === selectedId} onSelect={onSelect} />)}</div></div>)}</div><div className="floor-legend"><span><i className="legend-free" />{copy.free}</span><span><i className="legend-occupied" />{copy.occupied}</span><span>{copy.help}: L1–L5</span></div></section>; }
-function BedTile({ bed, patient, department, copy, language, selected, onSelect }: { bed: Bed; patient: Patient | null; department: Department; copy: Copy; language: UiLanguage; selected: boolean; onSelect: (patient: Patient) => void }) { const wait = patient ? waitMinutes(patient, department) : 0; const progress = Math.min(100, wait / (patient && patient.level <= 2 ? 30 : 90) * 100); return <button type="button" className={`bed-tile ${patient ? "occupied" : "empty"} ${selected ? "selected" : ""}`} onClick={() => patient && onSelect(patient)} disabled={!patient} aria-label={patient ? `${copy.bed} ${bed.label}, ${patient.name}, ${levelName(patient.level, language)}, ${wait} ${copy.min}` : `${copy.bed} ${bed.label}, ${copy.free}`}><span className="bed-label">{bed.label}</span>{patient ? <><span className="bed-avatar" style={{ background: `${LEVELS[patient.level].color}17`, color: LEVELS[patient.level].color }}>{initials(patient.name)}</span><span className="bed-level" style={{ color: LEVELS[patient.level].color }}>{levelName(patient.level, language)}</span><span className="bed-progress"><i style={{ width: `${progress}%`, background: progress >= 100 ? "#e5484d" : LEVELS[patient.level].color }} /></span></> : <span className="bed-free">{copy.free}</span>}</button>; }
-
-function PriorityPanel({ patient, copy, language, onSelect }: { patient: Patient | null; copy: Copy; language: UiLanguage; onSelect: (patient: Patient) => void }) { return <section className="panel priority-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.why}</span><h2>{copy.why}</h2></div><span className="priority-emblem"><Icon name="spark" size={18} /></span></div>{patient ? <><div className="priority-person"><Avatar patient={patient} size="large" /><div><strong>{patient.name}</strong><span>{patient.age ?? "—"} · {statusName(patient.stage, copy)}</span></div><LevelBadge level={patient.level} language={language} /></div><div className="clinical-note"><span className="note-label">{copy.attention}</span><p>{patient.vitals.spo2 !== null && patient.vitals.spo2 < 90 ? `Oxygen ${patient.vitals.spo2}% is below 90%.` : patient.flags[0] ?? patient.needs.reason}</p></div><div className="priority-rules"><span className="section-kicker">{copy.rule}</span><div>{(patient.flags.length ? patient.flags : [patient.needs.reason]).slice(0, 2).map((flag) => <span key={flag}>{flag}</span>)}</div></div><div className="priority-footer"><div><span>{copy.suggested}</span><strong>{patient.doctorId ? copy.withDoctor : copy.assign}</strong></div><button type="button" className="primary-button" onClick={() => onSelect(patient)}>{copy.viewPatient}<Icon name="arrow" size={17} /></button></div></> : <p className="empty-note">{copy.clearHint}</p>}</section>; }
-
-function QueuePanel({ patients, department, copy, language, onSelect, onView }: { patients: Patient[]; department: Department; copy: Copy; language: UiLanguage; onSelect: (patient: Patient) => void; onView: (view: View) => void }) { return <section className="panel queue-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.queue}</span><h2>{copy.queue}</h2><p>{copy.queueHint}</p></div><button type="button" className="link-button" onClick={() => onView("patients")}>{copy.seeAll}<Icon name="arrow" size={15} /></button></div><div className="queue-list">{patients.slice(0, 5).map((patient) => <button type="button" className="queue-row" key={patient.id} onClick={() => onSelect(patient)}><Avatar patient={patient} /><span className="queue-person"><strong>{patient.name}</strong><small>{patient.complaint}</small></span><LevelBadge level={patient.level} language={language} /><span className="queue-wait">{waitMinutes(patient, department)} <small>{copy.min}</small></span></button>)}</div></section>; }
-function AlertsPanel({ simulation, copy, onToast }: { simulation: Simulation; copy: Copy; onToast: (message: string) => void }) { return <section className="panel alerts-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.actions}</span><h2>{copy.attention}</h2></div><span className="alerts-count">{simulation.actions.length}</span></div><div className="alerts-list">{simulation.actions.length ? simulation.actions.slice(0, 4).map((action) => <div key={action.kind} className="alert-row"><span className={action.severity === "critical" ? "alert-mark critical" : "alert-mark"} /><div><strong>{action.title}</strong><p>{action.detail}</p></div><button type="button" onClick={() => { simulation.applyAction(action.kind); onToast(copy.updated); }} aria-label={`${action.title}: ${copy.done}`}><Icon name="arrow" size={17} /></button></div>) : <div className="alert-empty"><span className="calm-symbol">✓</span><strong>{copy.noAlerts}</strong><p>{copy.clearHint}</p></div>}</div></section>; }
-
-function PatientsView({ simulation, copy, language, patients, search, setSearch, searchRef, onSelect }: { simulation: Simulation; copy: Copy; language: UiLanguage; patients: Patient[]; search: string; setSearch: (value: string) => void; searchRef: React.RefObject<HTMLInputElement | null>; onSelect: (patient: Patient) => void }) { const [filter, setFilter] = useState<"all" | Patient["stage"]>("all"); const filters = [{ id: "all", label: copy.all }, { id: "waiting", label: copy.waitingStatus }, { id: "with_doctor", label: copy.withDoctor }, { id: "awaiting_results", label: copy.diagnostics }, { id: "awaiting_bed", label: copy.boarding }] as const; const shown = patients.filter((patient) => (filter === "all" || patient.stage === filter) && `${patient.name} ${patient.complaint}`.toLocaleLowerCase().includes(search.toLocaleLowerCase())); return <section className="view-stack"><ViewHeading kicker={copy.patients} title={copy.patients} body={copy.queueHint} /><div className="panel patients-panel"><div className="patients-toolbar"><div className="search-field"><Icon name="search" /><input ref={searchRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={copy.searchHint} aria-label={copy.search} /><kbd>/</kbd></div><div className="filter-list" aria-label={copy.filter}>{filters.map(({ id, label }) => <button key={id} type="button" className={filter === id ? "filter active" : "filter"} onClick={() => setFilter(id)}>{label}<span>{patients.filter((patient) => id === "all" || patient.stage === id).length}</span></button>)}</div></div><div className="patient-table"><div className="patient-table-head"><span>{copy.patients}</span><span>{copy.status}</span><span>{copy.doctor}</span><span>{copy.bed}</span><span>{copy.urgentWait}</span></div>{shown.length ? shown.map((patient) => { const doctor = simulation.department.doctors.find((item) => item.id === patient.doctorId); const bed = simulation.department.beds.find((item) => item.id === patient.bedId); return <button type="button" className="patient-table-row" key={patient.id} onClick={() => onSelect(patient)}><span className="patient-identity"><Avatar patient={patient} /><span><strong>{patient.name}</strong><small>{patient.complaint}</small></span></span><span><LevelBadge level={patient.level} language={language} /></span><span className="table-muted">{doctor?.name ?? copy.missing}</span><span className="table-muted">{bed?.label ?? "—"}</span><span className="table-time">{waitMinutes(patient, simulation.department)} {copy.min}</span></button>; }) : <div className="empty-note">{search ? copy.noSearch : copy.noFilter}</div>}</div></div></section>; }
-
-function ResourcesView({ simulation, copy, onToast }: { simulation: Simulation; copy: Copy; onToast: (message: string) => void }) { const department = simulation.department; const onShift = department.doctors.filter((doctor) => doctor.onShift); return <section className="view-stack"><ViewHeading kicker={copy.resources} title={copy.resources} body={copy.intro} /><div className="resources-top"><div><span className="section-kicker">{copy.queue}</span><h2>{copy.smart} / {copy.arrival}</h2><p>{department.policy === "smart" ? copy.smartHint : copy.arrivalHint}</p></div><div className="segmented"><button type="button" className={department.policy === "smart" ? "active" : ""} onClick={() => { simulation.changePolicy("smart"); onToast(copy.updated); }}>{copy.smart}</button><button type="button" className={department.policy === "first_come" ? "active" : ""} onClick={() => { simulation.changePolicy("first_come"); onToast(copy.updated); }}>{copy.arrival}</button></div></div><div className="resources-grid"><section className="panel capacity-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.beds}</span><h2>{copy.beds}</h2></div></div><div className="capacity-list">{ZONES.map(({ key, label }) => { const beds = department.beds.filter((bed) => bed.zone === key); const free = beds.filter((bed) => !bed.patientId).length; const filled = beds.length - free; return <div key={key} className="capacity-row"><div><strong>{key === "corridor" ? `${label} · no bed` : label}</strong><span>{free} {copy.free} · {filled} {copy.occupied}</span></div><div className="capacity-segments">{beds.map((bed) => <i key={bed.id} className={bed.patientId ? "filled" : ""} />)}</div><b>{free}/{beds.length}</b></div>; })}</div></section><section className="panel doctors-panel"><div className="panel-heading"><div><span className="section-kicker">{copy.doctors}</span><h2>{copy.doctors}</h2></div><span className="heading-meta">{onShift.length} {copy.active}</span></div><div className="doctor-list">{department.doctors.map((doctor) => { const busy = isBusy(department, doctor); const patient = department.patients.find((item) => item.doctorId === doctor.id && active(item)); return <div className={`doctor-row ${doctor.onShift ? "" : "off-shift"}`} key={doctor.id}><span className="doctor-avatar">{initials(doctor.name.replace("Dr. ", ""))}<i className={busy ? "busy" : ""} /></span><div><strong>{doctor.name}</strong><small>{doctor.specialty} · {doctor.onShift ? busy ? copy.busy : copy.available : copy.backup}</small></div><span>{patient?.name ?? "—"}</span></div>; })}</div></section></div></section>; }
-
-function EvidenceView({ copy }: { copy: Copy }) { const metrics = [{ label: copy.metricMissed, before: `${evidence.triage.nurse.urgentMissed}/${evidence.triage.nurse.urgentTotal}`, after: `${evidence.triage.ours.urgentMissed}/${evidence.triage.ours.urgentTotal}`, sample: `n=${evidence.triage.ours.urgentTotal}` }, { label: copy.metricCaught, before: `${evidence.level1.nurse}/${evidence.level1.total}`, after: `${evidence.level1.ours}/${evidence.level1.total}`, sample: `n=${evidence.level1.total}` }, { label: copy.metricPeak, before: `${evidence.shifts[2].firstCome.urgentWait.avg}m`, after: `${evidence.shifts[2].smart.urgentWait.avg}m`, sample: "20 shifts" }, { label: copy.metricFields, before: `${evidence.reading.fieldsChecked}`, after: `${evidence.reading.correct}%`, sample: `n=${evidence.reading.fieldsChecked}` }]; return <section className="view-stack"><ViewHeading kicker={copy.evidence} title={copy.evidenceTitle} body={copy.evidenceIntro} /><div className="evidence-hero"><div><span className="section-kicker">{copy.replay}</span><h2>41.2 <small>{copy.min}</small><span>→</span> 2.4 <small>{copy.min}</small></h2><p>{copy.metricPeak}</p></div><div className="evidence-bars"><div><span>{copy.firstCome}</span><i style={{ width: "100%" }} /></div><div><span>{copy.smartShort}</span><i style={{ width: "8%" }} /></div></div></div><div className="evidence-grid">{metrics.map((metric) => <article className="panel evidence-card" key={metric.label}><span className="section-kicker">{metric.sample}</span><h3>{metric.label}</h3><div><span>{copy.nurses}<strong>{metric.before}</strong></span><Icon name="arrow" size={18} /><span>{copy.engine}<strong>{metric.after}</strong></span></div></article>)}</div><p className="evidence-footer">{copy.retrospective}</p></section>; }
-
-function ViewHeading({ kicker, title, body }: { kicker: string; title: string; body: string }) { return <div className="view-heading"><span className="section-kicker">{kicker}</span><h1>{title}</h1><p>{body}</p></div>; }
-
-function PatientDrawer({ patient, department, copy, language, onClose, onAction }: { patient: Patient; department: Department; copy: Copy; language: UiLanguage; onClose: () => void; onAction: () => void }) { const doctor = department.doctors.find((item) => item.id === patient.doctorId); const bed = department.beds.find((item) => item.id === patient.bedId); const vitalFields = [["SpO₂", patient.vitals.spo2, "%"], ["Heart rate", patient.vitals.hr, "bpm"], ["Blood pressure", patient.vitals.sbp, "mmHg"], ["Temperature", patient.vitals.temp, "°C"]] as const; return <div className="drawer-scrim" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><aside className="patient-drawer" role="dialog" aria-modal="true" aria-label={`${copy.details}: ${patient.name}`}><div className="drawer-grabber" /><div className="drawer-top"><span className="section-kicker">{copy.details}</span><button type="button" className="icon-button" onClick={onClose} aria-label={copy.close}><Icon name="close" /></button></div><div className="drawer-person"><Avatar patient={patient} size="large" /><div><h2>{patient.name}</h2><p>{patient.age ?? "—"} · {patient.sex ?? "—"} · {statusName(patient.stage, copy)}</p></div></div><LevelBadge level={patient.level} language={language} /><div className="drawer-section"><span className="section-kicker">{copy.why}</span><p className="drawer-reason">{patient.vitals.spo2 !== null && patient.vitals.spo2 < 90 ? `Oxygen ${patient.vitals.spo2}% is below 90%.` : patient.flags[0] ?? patient.needs.reason}</p><div className="rule-list">{(patient.flags.length ? patient.flags : [patient.needs.reason]).map((flag) => <span key={flag}>{flag}</span>)}</div></div><div className="drawer-section"><span className="section-kicker">{copy.note}</span><p className="raw-note">{patient.note || copy.missing}</p></div><div className="drawer-section"><span className="section-kicker">{copy.fields}</span><div className="vital-grid">{vitalFields.map(([label, value, unit]) => <div key={label}><small>{label}</small><strong className={value === null ? "missing-value" : ""}>{value ?? copy.missing}{value !== null ? unit : ""}</strong></div>)}</div></div><div className="drawer-section suggested-box"><span className="section-kicker">{copy.suggested}</span><p>{copy.doctor}: {doctor?.name ?? copy.missing} · {copy.bed}: {bed?.label ?? copy.missing}</p>{!doctor && department.doctors.some((item) => !item.onShift) ? <button type="button" className="primary-button" onClick={onAction}>{copy.callBackup}<Icon name="arrow" size={17} /></button> : null}</div><p className="drawer-footnote">{patient.needs.reason}</p></aside></div>; }
