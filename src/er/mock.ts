@@ -1,5 +1,5 @@
-import { simulate } from "./engine";
-import type { Department, Intake, Needs, SurgeCase, Vitals } from "./types";
+import { confirmPlan, planCare, simulate } from "./engine";
+import type { CareOrder, Department, Intake, Level, Needs, Specialty, SurgeCase, Vitals } from "./types";
 
 const vitals = (v: Partial<Vitals>): Vitals => ({
   hr: null,
@@ -115,7 +115,124 @@ export const sampleCases: SurgeCase[] = [
 
 export const surgeCases: SurgeCase[] = sampleCases.slice(8);
 
+type WardPatient = {
+  id: string;
+  name: string;
+  age: number;
+  sex: "male" | "female";
+  complaint: string;
+  level: Level;
+  specialty: Specialty;
+  nurseId: string;
+  plannedAt: number;
+  missed: string[];
+  problems: string[];
+  orders: Omit<CareOrder, "suggested">[];
+};
+
+const order = (kind: CareOrder["kind"], title: string, frequency: CareOrder["frequency"], source: string) => ({ kind, title, frequency, source });
+
+export const wardPatients: WardPatient[] = [
+  {
+    id: "w1",
+    name: "Bilal Hussain",
+    age: 34,
+    sex: "male",
+    complaint: "Fractured right ankle with a wound, and acute diarrhoea",
+    level: 3,
+    specialty: "orthopaedics",
+    nurseId: "n4",
+    plannedAt: -60,
+    missed: ["IV Ringer's lactate 1 L", "Orthopaedics review"],
+    problems: ["Fractured right ankle with an open wound (in a back slab)", "Acute diarrhoea with mild dehydration"],
+    orders: [
+      order("iv_fluids", "IV Ringer's lactate 1 L", "every_8h", "Inj RL 1L 8 hourly"),
+      order("medication", "Inj metronidazole 500 mg IV", "every_8h", "Inj Flagyl 500mg IV TDS"),
+      order("dressing", "Change the ankle wound dressing", "daily", "ankle wound dressing OD"),
+      order("medication", "ORS after every loose stool", "as_needed", "ORS after each loose motion"),
+      order("review", "Orthopaedics review", "once", "ortho review today"),
+    ],
+  },
+  {
+    id: "w2",
+    name: "Nasreen Akhtar",
+    age: 61,
+    sex: "female",
+    complaint: "Pneumonia",
+    level: 2,
+    specialty: "medicine",
+    nurseId: "n3",
+    plannedAt: -150,
+    missed: [],
+    problems: ["Community-acquired pneumonia", "Low oxygen on arrival, now on 2 L oxygen"],
+    orders: [
+      order("medication", "Inj ceftriaxone 1 g IV", "every_12h", "Inj Rocephin 1g IV BD"),
+      order("medication", "Salbutamol nebulisation", "every_6h", "Neb Ventolin 6 hourly"),
+      order("vitals", "Check oxygen saturation", "every_4h", "SpO2 monitoring 4 hourly, keep above 94%"),
+      order("test", "Repeat chest X-ray", "once", "CXR repeat in morning"),
+    ],
+  },
+  {
+    id: "w3",
+    name: "Ghulam Rasool",
+    age: 58,
+    sex: "male",
+    complaint: "Infected diabetic foot ulcer",
+    level: 3,
+    specialty: "surgery",
+    nurseId: "n4",
+    plannedAt: 15,
+    missed: [],
+    problems: ["Infected diabetic foot ulcer, left foot", "Type 2 diabetes with high blood sugar"],
+    orders: [
+      order("medication", "Insulin as per sliding scale", "every_8h", "Inj Insulin as per sliding scale before meals"),
+      order("test", "Blood sugar check", "every_4h", "BSR 4 hourly"),
+      order("dressing", "Clean and dress the foot ulcer", "daily", "foot ulcer dressing daily with pyodine"),
+      order("review", "Surgery review", "once", "surgical review for debridement"),
+    ],
+  },
+];
+
+function addWardPatient(dept: Department, w: WardPatient): Department {
+  const now = dept.now;
+  let d = structuredClone(dept);
+  const doctor = d.doctors.find((doc) => doc.specialty === w.specialty) ?? d.doctors[0];
+
+  d.patients.push({
+    id: w.id,
+    name: w.name,
+    age: w.age,
+    sex: w.sex,
+    complaint: w.complaint,
+    vitals: vitals({}),
+    note: "",
+    arrivedAt: w.plannedAt - 180,
+    level: w.level,
+    flags: [],
+    needs: { specialty: w.specialty, resources: [], destination: "ward", highRisk: false, reason: "Admitted to the ward" },
+    review: [],
+    stage: "admitted",
+    doctorId: doctor.id,
+    bedId: null,
+    seenAt: w.plannedAt - 170,
+    stageEndsAt: null,
+    doneAt: w.plannedAt - 30,
+    nurseId: w.nurseId,
+    plan: null,
+  });
+
+  d.now = w.plannedAt;
+  d = confirmPlan(planCare(d, w.id, { problems: w.problems, orders: w.orders.map((o) => ({ ...o, suggested: false })), review: [] }), w.id);
+  d.now = now;
+
+  for (const t of d.tasks) {
+    if (t.patientId === w.id && t.dueAt <= now - 20 && !w.missed.includes(t.title)) t.doneAt = t.dueAt + 5;
+  }
+
+  return d;
+}
+
 export function mockDepartment(): Department {
   const arrivals = sampleCases.slice(0, 8).map((c, i) => ({ at: i * 5, ...c }));
-  return simulate(arrivals, "smart", 45);
+  return wardPatients.reduce(addWardPatient, simulate(arrivals, "smart", 45));
 }

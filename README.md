@@ -1,19 +1,24 @@
-# AICON'26: ER Operations Dashboard
+# ER Command: nothing gets missed
 
 Our project for the **Build with AI** module at AICON'26 (NUST). Assigned domain: **Health Operations**.
 
 **Live:** https://aicon26-er-dashboard-taupe.vercel.app
 
-Emergency departments in Pakistan run far over capacity (about 0.6 hospital beds per 1,000 people, one of the lowest rates in the world). Critical patients queue behind minor ones, patients wait on corridor trolleys, and nobody sees the whole floor at once. This dashboard helps the charge nurse decide **who is seen first, in which bed, by which doctor**, and what to do when the department is overwhelmed.
+Pakistani hospitals run far over capacity (about 0.6 hospital beds per 1,000 people, one of the lowest rates in the world), and in an overloaded hospital patients get missed. A hospital owner we spoke to named missed care as his biggest operational problem: missed doses, injections, drips, dressings and doctor visits. Care slips at two points:
+
+- **At the door:** critical patients queue behind minor ones and wait on corridor trolleys.
+- **On the ward:** orders written on the chart are forgotten in the rush.
+
+ER Command fixes both the same way: **the AI reads the mess, code turns it into tasks with an owner and a due time, and the dashboard escalates anything overdue.**
 
 ## What it does
 
-1. **Intake:** a nurse types or dictates a messy note in English, Urdu or Roman Urdu. The AI turns it into clean vitals plus predicted needs (specialty, tests, destination, high risk) and flags anything it was unsure about.
-2. **Triage:** an ESI-style checklist in code sets the urgency level (1–5). The AI can only raise priority, never lower it.
-3. **Allocation:** code places patients in resus, acute or fast-track beds and matches them to doctors by urgency, wait and specialty.
-4. **Live dashboard:** patients, beds, doctors and KPIs on a simulated clock, with a **Surge** button and a first-come vs smart policy toggle.
-5. **Actions:** code detects problems (no beds, critical patients waiting, boarding) and offers one-click fixes; the AI writes a short brief for the charge nurse in English or Urdu.
-6. **Evidence:** first come vs smart on the same arrivals, and triage accuracy against a real, anonymised triage dataset.
+1. **Intake:** a nurse types or dictates a messy note in English, Urdu or Roman Urdu. The AI turns it into clean vitals plus predicted needs and flags anything it was unsure about.
+2. **Triage and allocation:** an ESI-style checklist in code sets the urgency level (1–5); the AI can only raise priority. Code places patients in resus, acute or fast-track beds and matches doctors. Every waiting patient becomes a "see a doctor" task with a target time for their level.
+3. **Care plans:** the nurse adds notes or a **photo/PDF of the treatment chart or a report**. The AI lists the patient's problems and the orders actually written, with the exact source words. It never invents a drug or a dose. Code adds labelled monitoring suggestions, and the doctor confirms the plan.
+4. **Rounds:** code turns every order into timed tasks (BD → every 12 h, TDS → every 8 h). Nursing tasks go to the patient's nurse and reviews to their doctor. Everyone sees **Due now / Overdue**.
+5. **Escalation:** overdue tasks, full beds and waiting critical patients raise alerts with one-click fixes; the AI writes a short brief for the charge nurse in English or Urdu.
+6. **Evidence:** triage accuracy on 300 real visits and smart vs first-come allocation on real arrivals (below).
 
 ## Results on real data
 
@@ -22,11 +27,11 @@ We tested the full pipeline (AI reading of the nurse's note plus code triage) on
 | | Under-triage | Urgent patients rated non-urgent | Critical (level 1) patients caught |
 | --- | --- | --- | --- |
 | Triage nurses | 12.0% | 8 of 75 | 15 of 26 |
-| **Our pipeline** | **7.3%** | **5 of 75** | **22 of 26** |
+| **Our pipeline** | **6.3%** | **2 of 75** | **22 of 26** |
 | Code alone, without the AI | 48.7% | 43 of 75 | |
 
-- **The trade-off:** we rate more patients urgent than the experts did (over-triage 50% vs the nurses' 4%). ESI treats possible heart attack, stroke signs and GI bleeding as level 2, where the Korean experts often chose level 3. The patients we raised were admitted more often than those we didn't, and every raised level shows its reason so the nurse can lower it.
-- **Smart allocation:** replaying real visits at peak load (17 arrivals an hour, averaged over 20 simulated 4-hour shifts), patients the experts rated urgent waited **2.4 minutes instead of 41**, and 56 patients were seen instead of 43.
+- **The trade-off:** we rate more patients urgent than the experts did (over-triage 43% vs the nurses' 4%). ESI treats possible heart attack, stroke signs and GI bleeding as level 2, where the Korean experts often chose level 3. The patients we raised were admitted more often than those we didn't, and every raised level shows its reason so the nurse can lower it.
+- **Smart allocation:** replaying real visits at peak load (17 arrivals an hour, averaged over 20 simulated 4-hour shifts), patients the experts rated urgent waited **about 1 minute instead of 39**, and about 58 patients were seen instead of 44.
 
 ## Built before AICON'26 (disclosed)
 
@@ -39,7 +44,7 @@ The rulebook allows templates and boilerplate if they are disclosed. Before the 
 
 Everything for the ER dashboard, all visible in the commit history:
 
-- **Backend (Hafi):** the contract (`src/er/types.ts`); the triage, allocation and simulation engine (`src/er/engine.ts`); note parsing and AI prompts (`src/er/intake.ts`, `src/er/prompts.ts`); the `/api/intake` and `/api/advise` routes; synthetic demo patients (`src/er/mock.ts`); the evaluation on real visits (`scripts/evaluate.ts`), the real-case replay pool (`src/er/replay.ts`) and the evidence numbers (`src/er/evidence.ts`).
+- **Backend (Hafi):** the contract (`src/er/types.ts`); the triage, allocation, simulation, care-plan and rounds engine (`src/er/engine.ts`); order reading (`src/er/orders.ts`, `/api/care`); note parsing and AI prompts (`src/er/intake.ts`, `src/er/prompts.ts`); the `/api/intake` and `/api/advise` routes; synthetic demo patients (`src/er/mock.ts`); the evaluation on real visits (`scripts/evaluate.ts`), the real-case replay pool (`src/er/replay.ts`) and the evidence numbers (`src/er/evidence.ts`).
 - **Frontend (Haider):** the dashboard, intake form, actions panel, evidence page and all screens.
 
 ## Third-party resources
@@ -99,7 +104,8 @@ Code and AI split the work. The AI reads messy notes and writes the brief. Code 
 
 ## Demo safety
 
-- **Saved answers:** every AI answer is saved in `.ai-cache/`. Run the exact demo once before judging; on stage it replays instantly, even without Wi-Fi.
+- **Demo notes:** the 9 notes in `src/er/demo-notes.ts` have their real AI answers saved in `src/er/demo-answers.json`, which is part of the repo. They come back instantly with `cached: true`, on the laptop and on the live site, even if Gemini is down. If you change the prompt, run `node scripts/warm.ts` with the dev server running to refresh them.
+- **Saved answers on the laptop:** every other AI answer is saved in `.ai-cache/` on that machine, so a repeated demo replays instantly. The live site can't save files, so it asks Gemini fresh.
 - **Busy models:** on a 503 or 429 the app switches straight to `AI_FALLBACK_MODEL`, which has its own free quota. A brief server error gets one retry first.
 - **Time limit:** if the AI hasn't answered within `AI_TIME_LIMIT` seconds (25 by default), the routes fall back to rules instead of keeping the audience waiting.
 - **Deployed link (required):** Vercel builds `main` as production and every other branch as a preview. The project needs these environment variables: `AI_PROVIDER=gemini`, `AI_MODEL=gemini-3.5-flash-lite`, `AI_FALLBACK_MODEL=gemini-3.1-flash-lite` and `GEMINI_API_KEY`. Saved answers in `.ai-cache/` stay on your laptop; the deployed site asks the AI live.
