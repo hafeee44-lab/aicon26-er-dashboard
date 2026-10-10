@@ -112,7 +112,7 @@ export default function Home() {
               <div className="bg-bg xl:col-start-2 xl:row-start-1">
                 <AlarmList actions={cmd.actions} escalated={cmd.tasks.filter((t) => t.status === "overdue" && t.escalatedAt !== null).length} onApply={cmd.apply} />
               </div>
-              <div className="flex min-h-[300px] flex-col bg-bg xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:max-h-[66vh]">
+              <div className="flex min-h-[300px] flex-col bg-bg xl:col-start-1 xl:row-span-2 xl:row-start-1 xl:h-0 xl:min-h-[max(100%,560px)]">
                 <DoorBoard dept={dept} onOpen={setOpenId} />
               </div>
               <section aria-label="On the ward" className="bg-bg xl:col-start-1 xl:row-start-3">

@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { resourceCount } from "@/er/engine";
 import type { CareResponse, Department, Patient, TaskView } from "@/er/types";
-import { ageSex, at, bedLabel, DESTINATION_LABEL, doorStatus, dur, shortStaff, STAGE_LABEL, staffName, TONE_TEXT } from "./format";
+import { ageSex, at, bedLabel, DESTINATION_LABEL, doorStatus, dur, isActive, shortStaff, STAGE_LABEL, staffName, TONE_TEXT } from "./format";
 import { CarePlanner } from "./CarePlanner";
 import { TaskRow } from "./Tasks";
 import { Badge, Button, LevelTile, Micro } from "./ui";
@@ -83,7 +83,12 @@ export function PatientSheet({
               <span className="font-mono">{ageSex(p)}</span> · {p.complaint}
             </p>
             <p className="mt-1 font-mono text-[12px] text-ink-3">
-              <span className={`font-bold ${TONE_TEXT[doorStatus(dept, p).tone]}`}>{doorStatus(dept, p).code}</span> · {STAGE_LABEL[p.stage]} · in {at(p.arrivedAt)} ·{" "}
+              {isActive(p) && (
+                <>
+                  <span className={`font-bold ${TONE_TEXT[doorStatus(dept, p).tone]}`}>{doorStatus(dept, p).code}</span> ·{" "}
+                </>
+              )}
+              {STAGE_LABEL[p.stage]} · in {at(p.arrivedAt)} ·{" "}
               {p.seenAt === null ? `waiting ${dur(waited)}` : `seen after ${dur(waited)}`}
             </p>
           </div>
