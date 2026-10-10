@@ -123,7 +123,8 @@ export const DESTINATION_LABEL = { discharge: "Home", ward: "Ward", icu: "ICU", 
 
 export function initials(name: string) {
   return name
-    .replace(/^(Visit)\s+/, "#")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim()
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0])

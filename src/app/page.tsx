@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Alarms } from "@/components/command/Alarms";
+import { Alarms, Brief } from "@/components/command/Alarms";
 import { DoorBoard } from "@/components/command/DoorBoard";
 import { EvidenceView } from "@/components/command/EvidenceView";
 import { FloorPlan } from "@/components/command/FloorPlan";
@@ -11,7 +11,7 @@ import { PatientSheet } from "@/components/command/PatientSheet";
 import { Rounds } from "@/components/command/Rounds";
 import { ShiftLog, TaskRow } from "@/components/command/Tasks";
 import { Nav, TopBar, VIEWS, type View } from "@/components/command/TopBar";
-import { Button, SectionHead } from "@/components/command/ui";
+import { Button, Icon, SectionHead } from "@/components/command/ui";
 import { useCommand } from "@/components/command/useCommand";
 import type { TaskView } from "@/er/types";
 
@@ -58,6 +58,11 @@ export default function Home() {
         e.preventDefault();
         setIntakeOpen(true);
       }
+      if (e.key === "/") {
+        e.preventDefault();
+        setView("command");
+        requestAnimationFrame(() => document.getElementById("patient-search")?.focus());
+      }
       if (e.key === " " && (e.target as HTMLElement).tagName !== "BUTTON") {
         e.preventDefault();
         togglePlaying();
@@ -73,38 +78,20 @@ export default function Home() {
   const wardLate = ward.filter((t) => t.status === "overdue").length;
 
   return (
-    <div className="presentation-root min-h-screen pb-16 lg:pb-0">
+    <div className="presentation-root">
+      <a className="skip-link" href="#workspace">Skip to workspace</a>
       <TopBar cmd={cmd} view={view} onView={setView} onNew={() => setIntakeOpen(true)} />
 
       {view === "command" && (
-        <main className="command-content">
-          <div className="command-intro"><div><p className="micro">Your shift, in focus</p><h1>Who needs attention?</h1></div><p>Start with the queue. Act on the alarm.</p></div>
-          <FirstRunHelp />
+        <main id="workspace" className="command-content">
+          <div className="command-intro"><div><p className="eyebrow">Emergency department / Overview</p><h1>Nothing gets missed<span>.</span></h1><p>The right care. The right person. Right on time.</p></div><div className="shift-state"><span className={cmd.actions.length ? "status-dot attention" : "status-dot"} /><span>{cmd.actions.length ? "Your team needs you" : "Your shift is on track"}<small>{cmd.kpis.waiting} waiting · {cmd.kpis.doctorsOnShift} doctors on shift</small></span></div></div>
           <Params dept={cmd.dept} kpis={cmd.kpis} />
+          <Alarms actions={cmd.actions} kpis={cmd.kpis} onApply={cmd.apply} />
           <div className="command-primary-grid">
-            <div className="min-w-0">
-              <div className="flex min-h-[300px] flex-col">
-                <DoorBoard dept={cmd.dept} onOpen={setOpenId} />
-              </div>
-            </div>
-            <aside className="min-w-0">
-              <Alarms actions={cmd.actions} kpis={cmd.kpis} onApply={cmd.apply} />
-            </aside>
-          </div>
-          <div className="command-secondary-grid">
-              <section aria-label="Ward tasks" className="command-card">
-              <details className="ward-disclosure">
-              <summary><span>On the ward</span><span>{wardLate ? `${wardLate} overdue` : "All on time"} · {ward.length} tasks <span aria-hidden>⌄</span></span></summary>
-                <SectionHead
-                  title="Care due in the next two hours"
-                  aside={
-                    <>
-                      <Button size="sm" onClick={() => setView("rounds")}>
-                        View rounds
-                      </Button>
-                    </>
-                  }
-                />
+            <DoorBoard dept={cmd.dept} onOpen={setOpenId} />
+            <aside className="overview-side">
+              <section aria-label="Ward tasks" className="command-card ward-card">
+                <div className="ward-heading"><div><p className="eyebrow">Beyond the waiting room</p><h2>Care to follow up</h2></div><span className={`count-chip ${wardLate ? "text-alert" : ""}`}>{wardLate ? `${wardLate} late` : "On time"}</span></div>
                 {ward.length ? (
                   <ul>
                     {ward.slice(0, 3).map((t) => (
@@ -112,38 +99,46 @@ export default function Home() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="px-4 py-6 text-[13px] text-ink-3">No ward tasks are due in the next two hours.</p>
+                  <div className="friendly-empty"><Icon name="check" /><strong>Care is on schedule</strong><p>No ward tasks due in the next two hours.</p></div>
                 )}
-              </details>
+                <button className="ward-footer" type="button" onClick={() => setView("rounds")}>See all rounds<Icon name="arrow" size={18} /></button>
               </section>
+              <Brief actions={cmd.actions} kpis={cmd.kpis} />
+            </aside>
+          </div>
+          <div className="command-secondary-grid">
               <section aria-label="Shift log" className="command-card">
-                <SectionHead title="Shift log" />
+                <SectionHead title="Shift activity" aside={<Icon name="clock" size={18} />} />
                 <ShiftLog log={cmd.log} />
               </section>
+              <div className="overview-guide"><Icon name="pulse" size={28} /><h2>From a note to the next step.</h2><p>AI reads the nurse’s note. Clinical rules set priority. Your team makes the decision.</p><Button onClick={() => setIntakeOpen(true)}>Add a new arrival<Icon name="arrow" size={18} /></Button><FirstRunHelp /></div>
           </div>
+          <footer className="workspace-footer"><span>ER Command · Every patient accounted for.</span><span>Decision support. Clinicians make every final decision.</span></footer>
         </main>
       )}
 
       {view === "floor" && (
-        <main>
+        <main id="workspace" className="mode-content">
+          <div className="mode-intro"><p className="eyebrow">Space & people</p><h1>The whole floor. In view.</h1><p>Find a bed, see who’s caring, and follow the next task.</p></div>
           <FloorPlan dept={cmd.dept} tasks={cmd.tasks} onOpen={setOpenId} />
         </main>
       )}
 
       {view === "rounds" && (
-        <main>
+        <main id="workspace" className="mode-content">
+          <div className="mode-intro"><p className="eyebrow">Care coordination</p><h1>Every task has its time.</h1><p>Start with overdue care. Know who’s responsible.</p></div>
           <Rounds dept={cmd.dept} tasks={cmd.tasks} onDone={done} onOpen={setOpenId} />
         </main>
       )}
 
       {view === "evidence" && (
-        <main>
+        <main id="workspace">
           <EvidenceView />
         </main>
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg lg:hidden">
-        <Nav view={view} onView={setView} className="grid h-14 grid-cols-4" />
+      <div className="mobile-navigation">
+        <Nav view={view} onView={setView} />
       </div>
 
       {intakeOpen && (

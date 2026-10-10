@@ -11,7 +11,7 @@ function BedTile({ d, bed, onOpen }: { d: Department; bed: Bed; onOpen: (id: str
   const p = d.patients.find((x) => x.id === bed.patientId);
   if (!p) {
     return (
-      <div className="flex min-h-[86px] flex-col justify-between border border-dashed border-line-strong p-2.5">
+      <div className="floor-bed flex flex-col justify-between border border-dashed border-line-strong p-3">
         <span className="font-mono text-[12px] font-bold text-ink-3">{bed.label}</span>
         <span className="micro">Free</span>
       </div>
@@ -19,7 +19,7 @@ function BedTile({ d, bed, onOpen }: { d: Department; bed: Bed; onOpen: (id: str
   }
   const status = doorStatus(d, p);
   return (
-    <button type="button" onClick={() => onOpen(p.id)} aria-label={`Bed ${bed.label}: ${p.name}, level ${p.level}, ${status.code.toLowerCase()}`} className={`lvl-${p.level} lvl-edge flex min-h-[86px] flex-col justify-between border border-line-strong bg-raised p-2.5 pl-3.5 text-left hover:border-ink-3`}>
+    <button type="button" onClick={() => onOpen(p.id)} aria-label={`Bed ${bed.label}: ${p.name}, level ${p.level}, ${status.code.toLowerCase()}`} className={`floor-bed lvl-${p.level} lvl-edge flex flex-col justify-between border bg-raised p-3 pl-4 text-left`}>
       <span className="flex items-center justify-between">
         <span className="font-mono text-[12px] font-bold">{bed.label}</span>
         <LevelTile level={p.level} size="sm" />
@@ -51,7 +51,7 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
   const open = (patientId: string) => tasks.filter((t) => t.patientId === patientId && t.status !== "done" && t.kind !== "see_doctor");
 
   return (
-    <div className="grid gap-px bg-line">
+    <div className="floor-workspace">
       <section aria-label="Emergency department beds" className="bg-bg">
         <SectionHead index="01" title="Emergency department · floor plan" aside={<span className="font-mono text-[11px] text-ink-3">select a bed to open the patient</span>} />
         <div className="grid gap-4 p-4 lg:grid-cols-[1fr_2fr_1.5fr]">
@@ -59,9 +59,9 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
             const beds = dept.beds.filter((b) => b.zone === zone);
             const free = beds.filter((b) => !b.patientId).length;
             return (
-              <div key={zone} className="border-2 border-line-strong">
+              <div key={zone} className="floor-zone">
                 <div className="flex items-center justify-between border-b border-line-strong px-3 py-2">
-                  <span className="text-[13px] font-bold tracking-[0.04em] uppercase">{ZONE_NAME[zone]}</span>
+                  <span className="text-[15px] font-semibold">{ZONE_NAME[zone]}</span>
                   <span className={`font-mono text-[11px] ${free ? "text-ink-3" : "text-alert"}`}>
                     {free}/{beds.length} free
                   </span>
@@ -77,18 +77,18 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
         </div>
 
         <div className="grid gap-4 px-4 pb-4 lg:grid-cols-[2fr_1fr]">
-          <div className={`border-2 ${corridor.length ? "border-warn/70" : "border-line"}`}>
+          <div className="floor-zone">
             <div className="flex items-center justify-between border-b border-line px-3 py-2">
-              <span className="text-[13px] font-bold tracking-[0.04em] uppercase">Corridor</span>
+              <span className="text-[15px] font-semibold">Corridor · no bed</span>
               <span className={`font-mono text-[11px] ${corridor.length ? "text-warn" : "text-ink-3"}`}>{corridor.length} on trolleys</span>
             </div>
             <div className="scroll-x flex gap-2 p-2">
               {corridor.length ? corridor.map((p) => <Trolley key={p.id} d={dept} p={p} onOpen={onOpen} />) : <span className="p-2 text-[13px] text-ink-3">Nobody is being treated on the corridor.</span>}
             </div>
           </div>
-          <div className="border-2 border-line">
+          <div className="floor-zone">
             <div className="flex items-center justify-between border-b border-line px-3 py-2">
-              <span className="text-[13px] font-bold tracking-[0.04em] uppercase">Waiting room</span>
+              <span className="text-[15px] font-semibold">Waiting room</span>
               <span className="font-mono text-[11px] text-ink-3">{waiting.length} waiting</span>
             </div>
             <div className="flex items-end gap-3 p-3">
@@ -138,7 +138,7 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
 
       <section aria-label="Staff" className="bg-bg">
         <SectionHead index="03" title="Staff on shift" />
-        <div className="grid gap-px bg-line md:grid-cols-2">
+        <div className="floor-staff grid gap-px bg-line md:grid-cols-2">
           <ul className="bg-bg">
             {dept.doctors.map((doc) => {
               const p = dept.patients.find((x) => x.doctorId === doc.id && x.stage === "with_doctor");

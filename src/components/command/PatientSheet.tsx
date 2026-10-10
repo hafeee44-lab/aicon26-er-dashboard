@@ -3,10 +3,10 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { resourceCount } from "@/er/engine";
 import type { CareResponse, Department, Patient, TaskView } from "@/er/types";
-import { ageSex, at, bedLabel, DESTINATION_LABEL, dur, shortStaff, STAGE_LABEL, staffName } from "./format";
+import { ageSex, at, bedLabel, DESTINATION_LABEL, dur, initials, shortStaff, STAGE_LABEL, staffName } from "./format";
 import { CarePlanner } from "./CarePlanner";
 import { TaskRow } from "./Tasks";
-import { Badge, Button, LevelTile } from "./ui";
+import { Badge, Button, Icon, LevelBadge, trapDialogFocus } from "./ui";
 
 type Numeric = { label: string; value: string; unit: string; alarm: boolean };
 function numerics(p: Patient): Numeric[] {
@@ -33,9 +33,9 @@ export function PatientSheet({ dept, patient, tasks, onClose, onPlan, onConfirm,
   const count = resourceCount(p.needs.resources);
   const waited = (p.seenAt ?? dept.now) - p.arrivedAt;
   const vitals = numerics(p);
-  useEffect(() => { closeRef.current?.focus(); }, [p.id]);
-  return <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><button type="button" aria-label="Close patient" className="absolute inset-0 bg-black/55" onClick={onClose} /><div className="patient-sheet thin-scroll">
-    <header className="patient-sheet-header"><LevelTile level={p.level} size="lg" /><div><h2 id="sheet-title">{p.name || "Unnamed patient"}</h2><p>{ageSex(p)} · {p.complaint}</p><p>{STAGE_LABEL[p.stage]} · {p.seenAt === null ? "Waiting" : "Seen after"} <span className="font-mono tnum">{dur(waited)}</span></p></div><Button ref={closeRef} onClick={onClose} aria-label="Close patient details" aria-keyshortcuts="Escape">Close</Button></header>
+  useEffect(() => { const previous = document.activeElement as HTMLElement | null; closeRef.current?.focus(); return () => previous?.focus(); }, [p.id]);
+  return <div className="patient-overlay" role="dialog" aria-modal="true" aria-labelledby="sheet-title" onKeyDown={trapDialogFocus}><button type="button" tabIndex={-1} aria-label="Close patient" className="absolute inset-0" onClick={onClose} /><div className="patient-sheet thin-scroll">
+    <header className="patient-sheet-header"><span className="patient-avatar">{initials(p.name) || "?"}</span><div><h2 id="sheet-title">{p.name || "Unnamed patient"}</h2><p>{ageSex(p)} · {p.complaint}</p><LevelBadge level={p.level} /><p>{STAGE_LABEL[p.stage]} · {p.seenAt === null ? "Waiting" : "Seen after"} <span className="font-mono tnum">{dur(waited)}</span></p></div><Button ref={closeRef} onClick={onClose} aria-label="Close patient details" aria-keyshortcuts="Escape"><Icon name="close" size={18} /></Button></header>
     <Section title="Why this level">{p.flags.length ? <><p className="priority-explanation">{p.flags.slice(0, 2).join(". ")}</p>{p.flags.length > 2 && <details className="calm-details"><summary>See all reasons</summary><ul className="rule-explanation">{p.flags.slice(2).map((flag) => <li key={flag}>{flag}</li>)}</ul></details>}</> : <p className="priority-explanation">No danger signs. Level {p.level} reflects {count === 0 ? "an examination without extra tests or treatments" : `${count} type${count > 1 ? "s" : ""} of test or treatment`}.</p>}</Section>
     <Section title="Recorded vital signs">{vitals.length || p.vitals.consciousness ? <div className="patient-vitals">{vitals.map((n) => <div key={n.label}><span>{n.label}</span><strong className={`font-mono tnum ${n.alarm ? "text-alert" : ""}`}>{n.value}<small>{n.unit}</small></strong>{n.alarm && <small className="text-alert">Needs review</small>}</div>)}{p.vitals.consciousness && <div><span>Response</span><strong className={p.vitals.consciousness === "alert" ? "response-value" : "response-value text-alert"}>{p.vitals.consciousness}</strong></div>}</div> : <p>No vital signs recorded. Check the nurse’s note below.</p>}</Section>
     <Section title="Care plan"><CarePlanner key={p.id} patient={p} now={dept.now} onPlan={onPlan} onConfirm={onConfirm} /></Section>
