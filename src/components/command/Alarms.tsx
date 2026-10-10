@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Action, ActionKind, AdviseResponse, Kpis } from "@/er/types";
 import type { Language } from "@/lib/types";
-import { Button, ModeBadge, SectionHead, Seg } from "./ui";
+import { Button, Icon, ModeBadge, SectionHead, Seg } from "./ui";
 
 export const FIX: Record<ActionKind, string> = {
   call_doctor: "Call backup doctor",
@@ -17,9 +17,9 @@ export const FIX: Record<ActionKind, string> = {
 function Alarm({ action, onApply }: { action: Action; onApply: (kind: ActionKind) => void }) {
   const high = action.severity === "critical";
   return (
-    <li className="grid grid-cols-[52px_minmax(0,1fr)] border-b border-line last:border-b-0">
-      <div className={`flex items-start justify-center pt-3.5 font-mono text-[10px] font-extrabold tracking-[0.1em] ${high ? "bg-alert text-inverse" : "bg-warn text-inverse"}`}>
-        {high ? "HIGH" : "MED"}
+    <li className={`action-item ${high ? "action-critical" : "action-warning"}`}>
+      <div className="action-severity">
+        <Icon name="alert" size={17} />{high ? "Urgent attention" : "Needs attention"}
       </div>
       <div className="flex min-w-0 flex-col items-start gap-2.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 xl:flex-col xl:items-start xl:gap-2.5">
         <div className="min-w-0">
@@ -39,8 +39,8 @@ function Alarm({ action, onApply }: { action: Action; onApply: (kind: ActionKind
 export function AlarmList({ actions, escalated, onApply }: { actions: Action[]; escalated: number; onApply: (kind: ActionKind) => void }) {
   const sorted = [...actions].sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "critical" ? -1 : 1));
   return (
-    <section aria-label="Alarms">
-      <SectionHead index="02" title="Alarms" aside={<span className={`font-mono text-[11px] ${sorted.length ? "text-alert" : escalated ? "text-warn" : "text-ok"}`}>{sorted.length ? `${sorted.length} active` : escalated ? `${escalated} escalated` : "All clear"}</span>} />
+    <section className="surface action-panel" aria-label="Needs action now">
+      <SectionHead title="Needs action now" aside={<span className={`badge ${sorted.length ? "text-alert" : escalated ? "text-warn" : "text-ok"}`}>{sorted.length ? `${sorted.length} active` : escalated ? `${escalated} escalated` : "All clear"}</span>} />
       <ul aria-live="polite">
         {sorted.length === 0 && escalated > 0 && (
           <li className="flex items-center gap-3 px-4 py-4 text-[13px] text-ink-2">
@@ -55,9 +55,10 @@ export function AlarmList({ actions, escalated, onApply }: { actions: Action[]; 
           </li>
         )}
         {sorted.length > 0 && (
-          sorted.map((a) => <Alarm key={`${a.kind}-${a.title}`} action={a} onApply={onApply} />)
+          sorted.slice(0, 1).map((a) => <Alarm key={`${a.kind}-${a.title}`} action={a} onApply={onApply} />)
         )}
       </ul>
+      {sorted.length > 1 && <details className="more-actions"><summary>{sorted.length - 1} more actions</summary><ul>{sorted.slice(1).map((a) => <Alarm key={`${a.kind}-${a.title}`} action={a} onApply={onApply} />)}</ul></details>}
     </section>
   );
 }
@@ -84,6 +85,8 @@ export function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
   }
 
   return (
+    <details className="surface brief-panel">
+      <summary><span><Icon name="rounds" />Charge nurse handover</span><span>Write a brief +</span></summary>
     <section aria-label="AI brief for the charge nurse">
       <SectionHead
         index="04"
@@ -133,5 +136,6 @@ export function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
         )}
       </div>
     </section>
+    </details>
   );
 }

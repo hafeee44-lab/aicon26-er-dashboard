@@ -57,15 +57,15 @@ export function doorStatus(d: Department, p: Patient): { code: string; tone: Ton
   if (p.stage === "waiting") {
     const waited = d.now - p.arrivedAt;
     const target = TARGET_MINUTES[p.level];
-    if (waited > target) return { code: `LATE +${dur(waited - target)}`, tone: "alert" };
-    if (target - waited <= 0) return { code: "DUE NOW", tone: "warn" };
-    if (target - waited <= 5) return { code: `DUE IN ${dur(target - waited)}`, tone: "warn" };
-    return { code: `WAIT ${dur(waited)}`, tone: "normal" };
+    if (waited > target) return { code: `${dur(waited - target)} overdue`, tone: "alert" };
+    if (target - waited <= 0) return { code: "Needs a doctor now", tone: "warn" };
+    if (target - waited <= 5) return { code: `Due in ${dur(target - waited)}`, tone: "warn" };
+    return { code: `Waiting ${dur(waited)}`, tone: "normal" };
   }
-  if (p.stage === "with_doctor") return { code: "WITH DOCTOR", tone: "ok" };
-  if (p.stage === "awaiting_results") return { code: `RESULTS ${dur((p.stageEndsAt ?? d.now) - d.now)}`, tone: "normal" };
-  if (p.stage === "awaiting_bed") return { code: `BOARDING ${p.needs.destination.toUpperCase()}`, tone: "warn" };
-  return { code: STAGE_LABEL[p.stage].toUpperCase(), tone: "muted" };
+  if (p.stage === "with_doctor") return { code: "With a doctor", tone: "ok" };
+  if (p.stage === "awaiting_results") return { code: `Tests · ${dur((p.stageEndsAt ?? d.now) - d.now)}`, tone: "normal" };
+  if (p.stage === "awaiting_bed") return { code: `Waiting for ${DESTINATION_LABEL[p.needs.destination].toLowerCase()}`, tone: "warn" };
+  return { code: STAGE_LABEL[p.stage], tone: "muted" };
 }
 
 export const STAGE_LABEL: Record<Stage, string> = {
@@ -123,10 +123,11 @@ export const DESTINATION_LABEL = { discharge: "Home", ward: "Ward", icu: "ICU", 
 
 export function initials(name: string) {
   return name
-    .replace(/^(Visit)\s+/, "#")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim()
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0])
     .join("")
-    .toUpperCase();
+    .toUpperCase() || "?";
 }

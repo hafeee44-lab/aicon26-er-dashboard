@@ -1,55 +1,29 @@
+"use client";
+
+import { useState } from "react";
 import type { TaskView } from "@/er/types";
 import { at, dur, KIND_LABEL, shortStaff, STATUS_TONE, TONE_TEXT } from "./format";
-import { Button, Glyph } from "./ui";
+import { Button } from "./ui";
 import type { LogEntry } from "./useCommand";
 
 export function taskCode(t: TaskView, now: number) {
-  if (t.status === "done") return t.lateBy > 0 ? `DONE +${dur(t.lateBy)}` : "DONE";
-  if (t.status === "overdue") return `LATE ${dur(t.lateBy)}`;
-  if (t.status === "due") return "DUE NOW";
-  return `IN ${dur(t.dueAt - now)}`;
+  if (t.status === "done") return t.lateBy > 0 ? `Done · ${dur(t.lateBy)} late` : "Done";
+  if (t.status === "overdue") return `${dur(t.lateBy)} overdue`;
+  if (t.status === "due") return "Due now";
+  return `In ${dur(t.dueAt - now)}`;
 }
 
 export function TaskRow({ t, now, onDone, onOpen, showPatient = true }: { t: TaskView; now: number; onDone?: (t: TaskView) => void; onOpen?: (patientId: string) => void; showPatient?: boolean }) {
-  const tone = STATUS_TONE[t.status];
-  return (
-    <li className={`grid grid-cols-[48px_14px_minmax(0,1fr)_auto] items-center gap-x-3 border-b border-line px-4 py-2.5 ${t.status === "done" ? "opacity-55" : ""}`}>
-      <span className="font-mono text-[13px] text-ink-2 tnum">{at(t.dueAt)}</span>
-      <Glyph kind={t.kind} status={t.status} />
-      <span className="min-w-0">
-        <span className="block truncate font-bold">{t.kind === "see_doctor" ? KIND_LABEL.see_doctor : t.title}</span>
-        <span className="block truncate text-[12px] text-ink-3">
-          {showPatient && (
-            <button type="button" className="text-ink-2 underline decoration-line underline-offset-2 hover:decoration-ink-2" onClick={() => onOpen?.(t.patientId)}>
-              {t.patientName}
-            </button>
-          )}
-          {showPatient && " · "}
-          {t.role === "nurse" ? "Nurse" : "Doctor"}: {t.ownerId ? shortStaff(t.ownerName) : t.ownerName}
-          {t.escalatedAt !== null && <span className="ml-1.5 font-bold text-alert">· Escalated</span>}
-        </span>
-      </span>
-      <span className="flex items-center gap-2.5">
-        <span className={`font-mono text-[12px] font-bold tracking-[0.03em] ${TONE_TEXT[tone]}`}>{taskCode(t, now)}</span>
-        {onDone && t.kind !== "see_doctor" && t.status !== "done" && (
-          <Button size="sm" onClick={() => onDone(t)} aria-label={`Mark ${t.title} for ${t.patientName} as done`}>
-            Done
-          </Button>
-        )}
-      </span>
-    </li>
-  );
+  return <li className="task-row"><div className="task-row-main"><div className="task-row-title">{t.kind === "see_doctor" ? KIND_LABEL.see_doctor : t.title}</div><div className="task-row-meta">{showPatient && <><button type="button" onClick={() => onOpen?.(t.patientId)}>{t.patientName}</button><br /></>}{t.ownerId ? shortStaff(t.ownerName) : t.ownerName} · <span className="tnum">{at(t.dueAt)}</span>{t.escalatedAt !== null && <span className="text-alert"> · Escalated</span>}</div></div><div className="task-row-actions"><span className={`tnum ${TONE_TEXT[STATUS_TONE[t.status]]}`}>{taskCode(t, now)}</span>{onDone && t.kind !== "see_doctor" && t.status !== "done" && <Button size="sm" onClick={() => onDone(t)} aria-label={`Mark ${t.title} for ${t.patientName} as done`}>Done ✓</Button>}</div></li>;
 }
 
 export function ShiftLog({ log }: { log: LogEntry[] }) {
-  return (
-    <ol className="thin-scroll max-h-[260px] overflow-y-auto font-mono text-[12px]" aria-label="Shift log">
-      {log.map((e) => (
-        <li key={e.id} className="type-in grid grid-cols-[48px_minmax(0,1fr)] gap-x-3 border-b border-line px-4 py-2">
-          <span className="text-ink-3 tnum">{at(e.at)}</span>
-          <span className={e.tone === "alert" ? "text-alert" : e.tone === "ok" ? "text-ok" : "text-ink-2"}>{e.text}</span>
-        </li>
-      ))}
-    </ol>
-  );
+  const [expanded, setExpanded] = useState(false);
+  const display: (LogEntry & { count: number })[] = [];
+  for (const entry of log) {
+    const previous = display[display.length - 1];
+    if (previous?.text === entry.text) previous.count++;
+    else display.push({ ...entry, count: 1 });
+  }
+  return <><ol className="shift-log" aria-label="Shift activity">{(expanded ? display : display.slice(0, 3)).map((entry) => <li key={entry.id}><time>{at(entry.at)}</time><span className={entry.tone === "alert" ? "text-alert" : "text-ink-2"}>{entry.text}{entry.count > 1 && <strong> ×{entry.count}</strong>}</span></li>)}</ol>{display.length > 3 && <button type="button" className="log-toggle" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? "Show less" : `View all ${display.length} events`}</button>}</>;
 }

@@ -7,13 +7,13 @@ export const metadata = { title: "Evidence · ER Command" };
 export default function EvidencePage() {
   return (
     <div className="min-h-screen">
-      <header className="flex h-14 items-center justify-between border-b border-line px-4 lg:px-6">
+      <header className="app-header"><div className="header-inner justify-between">
         <Brand />
         <Link href="/" className="btn btn-sm">
-          Open the live board
+          Back to dashboard
         </Link>
-      </header>
-      <EvidenceView />
+      </div></header>
+      <main className="workspace"><div className="page-heading"><div><p className="eyebrow">Behind the decisions</p><h1>The difference, measured.</h1><p>Real visits. Transparent methods. Honest limitations.</p></div></div><EvidenceView /></main>
     </div>
   );
 }

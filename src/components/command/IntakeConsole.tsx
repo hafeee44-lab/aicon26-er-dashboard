@@ -5,7 +5,7 @@ import { TARGET_MINUTES, triage } from "@/er/engine";
 import { demoNotes } from "@/er/demo-notes";
 import type { Consciousness, Intake, IntakeResponse, Needs, Vitals } from "@/er/types";
 import { DESTINATION_LABEL, dur } from "./format";
-import { Button, LevelTile, Micro, ModeBadge, Seg } from "./ui";
+import { Button, Icon, LevelTile, Micro, ModeBadge, Seg, useDialogFocus } from "./ui";
 
 const LABELS = [
   "Chest pain · 67 M",
@@ -22,13 +22,13 @@ const LABELS = [
 type Mark = { start: number; end: number; color: string; label: string };
 
 const FIELDS: { key: keyof Vitals; label: string; color: string; step?: string }[] = [
-  { key: "hr", label: "HR", color: "text-hr" },
-  { key: "sbp", label: "SYS", color: "text-bp" },
-  { key: "dbp", label: "DIA", color: "text-bp" },
-  { key: "spo2", label: "SpO₂", color: "text-spo2" },
-  { key: "rr", label: "RR", color: "text-rr" },
-  { key: "temp", label: "TEMP", color: "text-temp", step: "0.1" },
-  { key: "pain", label: "PAIN", color: "text-ink" },
+  { key: "hr", label: "Heart rate", color: "text-ink" },
+  { key: "sbp", label: "Systolic pressure", color: "text-ink" },
+  { key: "dbp", label: "Diastolic pressure", color: "text-ink" },
+  { key: "spo2", label: "Oxygen %", color: "text-ink" },
+  { key: "rr", label: "Breathing rate", color: "text-ink" },
+  { key: "temp", label: "Temperature °C", color: "text-ink", step: "0.1" },
+  { key: "pain", label: "Pain / 10", color: "text-ink" },
 ];
 
 function marks(note: string, intake: Intake): Mark[] {
@@ -84,6 +84,7 @@ type Rec = {
 };
 
 export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdmit: (intake: Intake, needs: Needs, review: string[]) => void }) {
+  const dialogRef = useDialogFocus();
   const [note, setNote] = useState("");
   const [read, setRead] = useState<{ note: string; response: IntakeResponse } | null>(null);
   const [intake, setIntake] = useState<Intake | null>(null);
@@ -141,20 +142,18 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
     setIntake((i) => (i ? { ...i, vitals: { ...i.vitals, [key]: raw === "" ? null : key === "consciousness" ? (raw as Consciousness) : Number(raw) } } : i));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="intake-title">
-      <div className="grid max-h-full w-full max-w-[1120px] overflow-y-auto border border-line-strong bg-bg lg:grid-cols-[1fr_1.05fr] lg:overflow-hidden">
-        <div className="flex flex-col border-b border-line lg:border-r lg:border-b-0">
-          <div className="flex h-14 items-center justify-between border-b border-line px-5">
-            <h2 id="intake-title" className="text-[15px] font-bold">
-              New arrival · the nurse&apos;s note
-            </h2>
-            <Button size="sm" onClick={onClose} aria-keyshortcuts="Escape">
-              Close
+    <div ref={dialogRef} className="intake-overlay" role="dialog" aria-modal="true" aria-labelledby="intake-title">
+      <div className="intake-sheet">
+        <div className="intake-source">
+          <div className="intake-heading">
+            <div><p className="eyebrow">From note to next step</p><h2 id="intake-title">Welcome a new patient.</h2></div>
+            <Button size="sm" onClick={onClose} aria-keyshortcuts="Escape" aria-label="Close new arrival">
+              <Icon name="close" />
             </Button>
           </div>
           <div className="flex flex-1 flex-col gap-4 p-5">
-            <div>
-              <Micro>Try a demo note · English, Roman Urdu, Urdu</Micro>
+            <details className="example-notes">
+              <summary>Try an example note · English / اردو / Roman Urdu</summary>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {demoNotes.map((n, i) => (
                   <button
@@ -171,9 +170,9 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                   </button>
                 ))}
               </div>
-            </div>
-            <label htmlFor="intake-note" className="sr-only">
-              Nurse note
+            </details>
+            <label htmlFor="intake-note" className="font-semibold">
+              Paste the nurse’s note
             </label>
             <textarea
               id="intake-note"
@@ -209,18 +208,18 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
           </div>
         </div>
 
-        <div className={`thin-scroll flex flex-col lg:max-h-[86vh] lg:overflow-y-auto ${loading ? "scanning" : ""}`}>
+        <div className={`intake-preview flex flex-col ${loading ? "scanning" : ""}`} aria-busy={loading}>
           {!result || !intake || !needs ? (
-            <div className="flex flex-1 flex-col justify-center gap-5 p-8">
+            <div className="reading-steps">
               {[
-                ["01", "The AI reads the note", "Vitals, complaint and likely needs, in English, Urdu or Roman Urdu. Anything it had to guess is marked for you to check."],
-                ["02", "Code sets the level", "An ESI checklist decides levels 1 to 5. The AI can only raise priority, never lower it."],
-                ["03", "You admit", "The patient joins the board with a due time: L1 now, L2 15 min, L3 30, L4 60, L5 120."],
+                ["01", "Start with what you know.", "Paste or dictate a note in English, Urdu or Roman Urdu."],
+                ["02", "Review what was read.", "Check extracted facts. Uncertain fields stay marked; missing values stay empty."],
+                ["03", "Give care a clear next step.", "Confirm the patient. Rules set the priority and a doctor target time."],
               ].map(([n, t, b]) => (
-                <div key={n} className="grid grid-cols-[32px_1fr] gap-3">
-                  <span className="font-mono text-[12px] text-ink-3">{n}</span>
+                <div key={n} className="reading-step">
+                  <span>{n}</span>
                   <div>
-                    <div className="font-bold">{t}</div>
+                    <strong>{t}</strong>
                     <p className="mt-0.5 text-[13px] text-ink-2">{b}</p>
                   </div>
                 </div>
@@ -228,10 +227,10 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
             </div>
           ) : (
             <>
-              <div className="flex items-start gap-4 border-b border-line p-5">
+              <div className="flex flex-wrap items-start gap-4 border-b border-line p-5">
                 <LevelTile level={result.level} size="lg" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[22px] leading-tight font-bold">Level {result.level}</div>
+                  <div className="text-[22px] leading-tight font-semibold">Review before adding</div>
                   <div className="font-mono text-[12px] text-ink-2">See a doctor {TARGET_MINUTES[result.level] === 0 ? "now" : `within ${dur(TARGET_MINUTES[result.level])}`}</div>
                   <ul className="mt-2 space-y-1 text-[13px]">
                     {(result.flags.length ? result.flags : [`No danger signs · ${needs.resources.length} likely needs`]).map((f) => (
@@ -272,12 +271,12 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                 </label>
               </div>
 
-              <div className="grid grid-cols-4 gap-px border-b border-line bg-line sm:grid-cols-8">
+              <div className="grid grid-cols-2 gap-3 border-b border-line p-5">
                 {FIELDS.map((f) => {
                   const check = review.includes(f.key);
                   return (
-                    <label key={f.key} className={`bg-bg px-2.5 py-2 ${check ? "outline-2 -outline-offset-2 outline-warn" : ""}`}>
-                      <span className={`font-mono text-[10px] font-bold ${check ? "text-warn" : f.color}`}>
+                    <label key={f.key} className={`rounded-xl border bg-panel px-3 py-3 ${check ? "border-warn border-dashed" : "border-line"}`}>
+                      <span className={`text-[13px] font-semibold ${check ? "text-warn" : f.color}`}>
                         {f.label}
                         {check && " ·?"}
                       </span>
@@ -288,15 +287,15 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                         onChange={(e) => setVital(f.key, e.target.value)}
                         aria-label={f.label}
                         className={`mt-0.5 w-full bg-transparent font-mono text-[20px] font-bold outline-none ${f.color}`}
-                        placeholder="—"
+                        placeholder="Not recorded"
                       />
                     </label>
                   );
                 })}
-                <label className="bg-bg px-2.5 py-2">
-                  <span className="font-mono text-[10px] font-bold text-ink">AVPU</span>
+                <label className="rounded-xl border border-line bg-panel px-3 py-3">
+                  <span className="text-[13px] font-semibold text-ink">Consciousness</span>
                   <select value={intake.vitals.consciousness ?? ""} onChange={(e) => setVital("consciousness", e.target.value)} className="mt-1 w-full bg-transparent font-mono text-[12px] font-bold outline-none" aria-label="Consciousness">
-                    <option value="">—</option>
+                    <option value="">Not recorded</option>
                     <option value="alert">Alert</option>
                     <option value="voice">Voice</option>
                     <option value="pain">Pain</option>
@@ -318,10 +317,11 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                 </label>
               </div>
 
-              <div className="mt-auto flex items-center justify-between gap-3 p-5">
+              <div className="mt-auto flex flex-wrap items-center justify-between gap-3 p-5">
                 <span className="text-[12px] text-ink-3">{review.length ? `Check ${review.length} field${review.length > 1 ? "s" : ""} the AI was unsure about` : "Nothing flagged for checking"}</span>
-                <Button variant="solid" size="lg" onClick={() => onAdmit(intake, needs, review)}>
-                  Admit · level {result.level}
+                {read?.note !== note && <p className="text-warn text-[13px]">The note changed. Read it again before adding.</p>}
+                <Button variant="solid" size="lg" disabled={loading || read?.note !== note} onClick={() => onAdmit(intake, needs, review)}>
+                  Add patient to queue <Icon name="arrow" size={18} />
                 </Button>
               </div>
             </>

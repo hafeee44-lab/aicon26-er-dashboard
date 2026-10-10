@@ -1,196 +1,63 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { resourceCount } from "@/er/engine";
 import type { CareResponse, Department, Patient, TaskView } from "@/er/types";
-import { ageSex, at, bedLabel, DESTINATION_LABEL, doorStatus, dur, isActive, shortStaff, STAGE_LABEL, staffName, TONE_TEXT } from "./format";
+import { ageSex, at, bedLabel, DESTINATION_LABEL, dur, initials, STAGE_LABEL, staffName } from "./format";
 import { CarePlanner } from "./CarePlanner";
 import { TaskRow } from "./Tasks";
-import { Badge, Button, LevelTile, Micro } from "./ui";
+import { Badge, Button, Icon, LevelTile, useDialogFocus } from "./ui";
 
-type Numeric = { label: string; value: string; unit: string; color: string; alarm: boolean };
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="sheet-section"><h3>{title}</h3>{children}</section>;
+}
 
-function numerics(p: Patient): Numeric[] {
+function vitals(p: Patient) {
   const v = p.vitals;
   const adult = (p.age ?? 30) >= 8;
   return [
-    { label: "HR", value: v.hr?.toString() ?? "—", unit: "bpm", color: "text-hr", alarm: v.hr !== null && adult && v.hr > 100 },
-    { label: "NIBP", value: v.sbp !== null ? `${v.sbp}/${v.dbp ?? "—"}` : "—", unit: "mmHg", color: "text-bp", alarm: v.sbp !== null && v.sbp < 90 },
-    { label: "SpO₂", value: v.spo2?.toString() ?? "—", unit: "%", color: "text-spo2", alarm: v.spo2 !== null && v.spo2 < 92 },
-    { label: "RR", value: v.rr?.toString() ?? "—", unit: "/min", color: "text-rr", alarm: v.rr !== null && adult && v.rr > 20 },
-    { label: "Temp", value: v.temp?.toString() ?? "—", unit: "°C", color: "text-temp", alarm: v.temp !== null && v.temp >= 38 },
-    { label: "Pain", value: v.pain?.toString() ?? "—", unit: "/10", color: "text-ink", alarm: v.pain !== null && v.pain >= 7 },
-    { label: "AVPU", value: v.consciousness ? v.consciousness[0].toUpperCase() : "—", unit: v.consciousness ?? "", color: "text-ink", alarm: v.consciousness !== null && v.consciousness !== "alert" },
-  ];
+    { label: "Heart rate", value: v.hr, unit: "beats / minute", alarm: v.hr !== null && adult && v.hr > 100 },
+    { label: "Blood pressure", value: v.sbp !== null ? `${v.sbp}/${v.dbp ?? "?"}` : null, unit: "mmHg", alarm: v.sbp !== null && v.sbp < 90 },
+    { label: "Oxygen", value: v.spo2, unit: "% saturation", alarm: v.spo2 !== null && v.spo2 < 92 },
+    { label: "Breathing rate", value: v.rr, unit: "breaths / minute", alarm: v.rr !== null && adult && v.rr > 20 },
+    { label: "Temperature", value: v.temp, unit: "°C", alarm: v.temp !== null && v.temp >= 38 },
+    { label: "Pain", value: v.pain, unit: "out of 10", alarm: v.pain !== null && v.pain >= 7 },
+    { label: "Consciousness", value: v.consciousness, unit: "response", alarm: v.consciousness !== null && v.consciousness !== "alert" },
+  ].filter((vital) => vital.value !== null);
 }
 
-function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
-  return (
-    <section className="border-b border-line px-5 py-4">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="micro">{title}</h3>
-        {aside}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-export function PatientSheet({
-  dept,
-  patient,
-  tasks,
-  onClose,
-  onPlan,
-  onConfirm,
-  onDone,
-  onPrev,
-  onNext,
-  position,
-}: {
-  dept: Department;
-  patient: Patient;
-  tasks: TaskView[];
-  onPrev?: () => void;
-  onNext?: () => void;
-  position?: string;
-  onClose: () => void;
-  onPlan: (draft: CareResponse["plan"]) => void;
-  onConfirm: () => void;
-  onDone: (t: TaskView) => void;
+export function PatientSheet({ dept, patient: p, tasks, onClose, onPlan, onConfirm, onDone, onPrev, onNext, position }: {
+  dept: Department; patient: Patient; tasks: TaskView[]; onPrev?: () => void; onNext?: () => void; position?: string;
+  onClose: () => void; onPlan: (draft: CareResponse["plan"]) => void; onConfirm: () => void; onDone: (t: TaskView) => void;
 }) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const p = patient;
+  const [tab, setTab] = useState<"summary" | "care" | "notes">("summary");
+  const ref = useDialogFocus();
   const mine = tasks.filter((t) => t.patientId === p.id);
   const count = resourceCount(p.needs.resources);
   const waited = (p.seenAt ?? dept.now) - p.arrivedAt;
-
-  useEffect(() => {
-    closeRef.current?.focus();
-  }, [p.id]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-      <button type="button" aria-label="Close patient" className="absolute inset-0 bg-black/55" onClick={onClose} />
-      <div className="thin-scroll relative h-full w-full max-w-[600px] overflow-y-auto border-l border-line-strong bg-bg">
-        <header className="sticky top-0 z-10 flex items-start gap-4 border-b border-line bg-bg px-5 py-4">
-          <LevelTile level={p.level} size="lg" />
-          <div className="min-w-0 flex-1">
-            <h2 id="sheet-title" className="truncate text-[24px] leading-tight font-bold">
-              {p.name || "Unnamed patient"}
-            </h2>
-            <p className="mt-0.5 text-[14px] text-ink-2">
-              <span className="font-mono">{ageSex(p)}</span> · {p.complaint}
-            </p>
-            <p className="mt-1 font-mono text-[12px] text-ink-3">
-              {isActive(p) && (
-                <>
-                  <span className={`font-bold ${TONE_TEXT[doorStatus(dept, p).tone]}`}>{doorStatus(dept, p).code}</span> ·{" "}
-                </>
-              )}
-              {STAGE_LABEL[p.stage]} · in {at(p.arrivedAt)} ·{" "}
-              {p.seenAt === null ? `waiting ${dur(waited)}` : `seen after ${dur(waited)}`}
-            </p>
-          </div>
-          <div className="flex flex-none flex-col items-end gap-2">
-            <Button ref={closeRef} size="sm" onClick={onClose} aria-keyshortcuts="Escape">
-              Close
-            </Button>
-            {position && (
-              <div className="flex items-center gap-1">
-                <Button size="sm" onClick={onPrev} disabled={!onPrev} aria-label="Previous patient" aria-keyshortcuts="ArrowLeft">
-                  ←
-                </Button>
-                <span className="w-12 text-center font-mono text-[11px] text-ink-3 tnum">{position}</span>
-                <Button size="sm" onClick={onNext} disabled={!onNext} aria-label="Next patient" aria-keyshortcuts="ArrowRight">
-                  →
-                </Button>
-              </div>
-            )}
-          </div>
-        </header>
-
-        <Section title={`Why level ${p.level}`}>
-          {p.flags.length ? (
-            <ul className="space-y-1.5">
-              {p.flags.map((f) => (
-                <li key={f} className="flex gap-2.5 text-[14px]">
-                  <span className={`mt-1.5 size-2 flex-none lvl-${p.level}`} style={{ background: "var(--lvl)" }} aria-hidden />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-[14px] text-ink-2">
-              No danger signs. Level {p.level} because the team will likely need {count === 0 ? "no tests or treatments" : `${count} type${count > 1 ? "s" : ""} of test or treatment`} ({p.needs.resources.join(", ") || "none"}), following the ESI rules.
-            </p>
-          )}
-        </Section>
-
-        <section aria-label="Vital signs" className="grid grid-cols-4 gap-px border-b border-line bg-line sm:grid-cols-8">
-          {numerics(p).map((n) => (
-            <div key={n.label} className={`bg-bg px-3 py-3 ${n.label === "NIBP" ? "col-span-2" : ""}`}>
-              <div className={`font-mono text-[11px] font-bold ${n.color}`}>{n.label}</div>
-              <div className={`mt-1 font-mono text-[24px] leading-none font-bold tnum ${n.alarm ? "text-alert" : n.color}`}>{n.value}</div>
-              <div className="mt-1 truncate font-mono text-[10px] text-ink-3">{n.unit}</div>
-            </div>
-          ))}
-        </section>
-
-        <Section title="What the AI read" aside={p.review.length ? <Badge tone="warn">Check: {p.review.join(", ")}</Badge> : undefined}>
-          <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-y-1.5 text-[14px]">
-            <dt className="text-ink-3">Specialty</dt>
-            <dd className="capitalize">{p.needs.specialty}</dd>
-            <dt className="text-ink-3">Likely needs</dt>
-            <dd>{p.needs.resources.length ? p.needs.resources.join(", ").replaceAll("_", " ") : "nothing beyond an examination"}</dd>
-            <dt className="text-ink-3">Likely to go</dt>
-            <dd>{DESTINATION_LABEL[p.needs.destination]}</dd>
-            <dt className="text-ink-3">High risk</dt>
-            <dd>{p.needs.highRisk ? "Yes, raised priority" : "No"}</dd>
-          </dl>
-          {p.needs.reason && <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{p.needs.reason}</p>}
-          {p.note && (
-            <p className="mt-3 border-l-2 border-line-strong pl-3 text-[13px] text-ink-3">
-              Nurse note: <span className="hand text-[19px] leading-tight">{p.note}</span>
-            </p>
-          )}
-        </Section>
-
-        {p.source && (
-          <Section title="Real visit · what actually happened">
-            <p className="text-[14px] text-ink-2">
-              Anonymised visit {p.source.row} from {p.source.dataset}. Expert triage: <b className="text-ink">L{p.source.expertLevel}</b> · triage nurse: <b className="text-ink">L{p.source.nurseLevel}</b> · ours: <b className="text-ink">L{p.level}</b> · outcome: {p.source.outcome}.
-            </p>
-          </Section>
-        )}
-
-        <Section title="People and place">
-          <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-y-1.5 text-[14px]">
-            <dt className="text-ink-3">Bed</dt>
-            <dd className="font-mono">{bedLabel(dept, p) ?? (p.stage === "admitted" ? "Ward" : "—")}</dd>
-            <dt className="text-ink-3">Doctor</dt>
-            <dd>{staffName(dept, p.doctorId) ?? "Not yet assigned"}</dd>
-            <dt className="text-ink-3">Nurse</dt>
-            <dd>{shortStaff(staffName(dept, p.nurseId))}</dd>
-          </dl>
-        </Section>
-
-        <Section title="Care plan · read from the chart">
-          <CarePlanner key={p.id} patient={p} now={dept.now} onPlan={onPlan} onConfirm={onConfirm} />
-        </Section>
-
-        <Section title={`Tasks · ${mine.filter((t) => t.status !== "done").length} open`}>
-          {mine.length ? (
-            <ul className="-mx-5 border-t border-line">
-              {mine.map((t) => (
-                <TaskRow key={t.id} t={t} now={dept.now} onDone={onDone} showPatient={false} />
-              ))}
-            </ul>
-          ) : (
-            <Micro>No tasks yet</Micro>
-          )}
-        </Section>
-      </div>
+  const recorded = vitals(p);
+  const explanation = p.flags[0] ?? `No danger signs recorded. ${count} type${count === 1 ? "" : "s"} of test or treatment expected.`;
+  return <div ref={ref} className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <button type="button" tabIndex={-1} className="modal-dismiss" onClick={onClose} aria-label="Close patient details" />
+    <div className="patient-sheet thin-scroll">
+      <header className="sheet-header"><span className="patient-avatar">{initials(p.name)}</span><div className="sheet-header-main"><h2 id="sheet-title">{p.name || "Unnamed patient"}</h2><p>{ageSex(p)} · {p.complaint}</p></div><Button size="sm" onClick={onClose} aria-label="Close patient (Escape)"><Icon name="close" size={18} /></Button></header>
+      <div className="sheet-toolbar"><div className="flex flex-wrap gap-2 items-center"><LevelTile level={p.level} /><span className="muted">{STAGE_LABEL[p.stage]}</span></div><span className="muted tnum">{p.seenAt === null ? `${dur(waited)} waiting` : `Seen after ${dur(waited)}`}</span></div>
+      <div className="sheet-nav" role="group" aria-label="Patient detail views">{([{ id: "summary", label: "Overview" }, { id: "care", label: `Care & tasks (${mine.filter((t) => t.status !== "done").length})` }, { id: "notes", label: "Original notes" }] as const).map((item) => <button type="button" key={item.id} aria-pressed={tab === item.id} onClick={() => setTab(item.id)}>{item.label}</button>)}</div>
+      {tab === "summary" && <>
+        <Section title="Why this priority"><div className="priority-explanation"><p>{explanation}</p><details><summary>See all priority rules</summary>{p.flags.length ? p.flags.map((f) => <span key={f} className="rule-chip">{f} → L{p.level}</span>) : <p>Emergency Severity Index rules assign level {p.level} using the expected tests and treatments: {p.needs.resources.join(", ").replaceAll("_", " ") || "examination only"}.</p>}</details></div></Section>
+        <Section title="Recorded vital signs">{recorded.length ? <div className="vital-grid">{recorded.map((v) => <div key={v.label} className={`vital-card ${v.alarm ? "alarm" : ""}`}><span>{v.label}{v.alarm ? " · Check" : ""}</span><strong className={v.alarm ? "text-alert" : ""}>{v.value}</strong><span>{v.unit}</span></div>)}</div> : <p className="muted">No vital signs were recorded in the note.</p>}</Section>
+        <Section title="Care team & location"><dl className="detail-list"><dt>Location</dt><dd>{bedLabel(dept, p) ? `Bed ${bedLabel(dept, p)}` : p.stage === "admitted" ? "Ward · bed not recorded" : "No bed assigned"}</dd><dt>Doctor</dt><dd>{staffName(dept, p.doctorId) ?? "Not yet assigned"}</dd><dt>Nurse</dt><dd>{staffName(dept, p.nurseId) ?? "Not yet assigned"}</dd><dt>Arrival</dt><dd className="tnum">{at(p.arrivedAt)}</dd></dl><Button variant="solid" className="mt-5 w-full" onClick={() => setTab("care")}>Open care plan & tasks <Icon name="arrow" size={17} /></Button></Section>
+      </>}
+      {tab === "care" && <>
+        <Section title="Care plan"><CarePlanner key={p.id} patient={p} now={dept.now} onPlan={onPlan} onConfirm={onConfirm} /></Section>
+        <Section title="Scheduled care">{mine.length ? <ul className="-mx-6">{mine.map((t) => <TaskRow key={t.id} t={t} now={dept.now} onDone={onDone} showPatient={false} />)}</ul> : <p className="muted">No care tasks yet. Confirm a care plan to schedule them.</p>}</Section>
+      </>}
+      {tab === "notes" && <>
+        <Section title="The nurse’s original note">{p.note ? <p className="note-quote" dir="auto">{p.note}</p> : <p className="muted">An original note was not recorded for this patient.</p>}</Section>
+        <Section title="What the note tells us">{p.review.length > 0 && <div className="mb-4"><Badge tone="warn">Needs review: {p.review.join(", ")}</Badge><p className="muted mt-2">These fields were uncertain. Check the original note.</p></div>}<dl className="detail-list"><dt>Specialty</dt><dd className="capitalize">{p.needs.specialty}</dd><dt>Expected needs</dt><dd>{p.needs.resources.join(", ").replaceAll("_", " ") || "Examination only"}</dd><dt>Likely destination</dt><dd>{DESTINATION_LABEL[p.needs.destination]}</dd><dt>High risk</dt><dd>{p.needs.highRisk ? "Yes · priority raised" : "No high-risk flag"}</dd></dl>{p.needs.reason && <p className="mt-4 text-[14px] text-ink-2">{p.needs.reason}</p>}</Section>
+        {p.source && <Section title="Anonymised visit · recorded outcome"><p className="text-[14px] text-ink-2">Visit {p.source.row} from {p.source.dataset}. Expert level: L{p.source.expertLevel}. Nurse level: L{p.source.nurseLevel}. Our level: L{p.level}. Recorded outcome: {p.source.outcome}.</p></Section>}
+      </>}
+      {position && <div className="sheet-toolbar"><Button onClick={onPrev} disabled={!onPrev} aria-label="Previous patient">← Previous</Button><span className="muted">Patient {position}</span><Button onClick={onNext} disabled={!onNext} aria-label="Next patient">Next →</Button></div>}
     </div>
-  );
+  </div>;
 }

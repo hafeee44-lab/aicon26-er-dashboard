@@ -7,7 +7,7 @@ import type { CareOrder, CareResponse, Patient } from "@/er/types";
 import { readUpload } from "@/lib/files";
 import type { Attachment } from "@/lib/types";
 import { at, FREQ_LABEL, KIND_LABEL } from "./format";
-import { Badge, Button, Glyph, Micro, ModeBadge } from "./ui";
+import { Badge, Button, Glyph, Icon, Micro, ModeBadge } from "./ui";
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -36,7 +36,7 @@ function Rhythm({ order }: { order: CareOrder }) {
 
 function OrderItem({ order }: { order: CareOrder }) {
   return (
-    <li className="border-b border-line py-3">
+    <li className="care-order">
       <div className="flex items-start gap-2.5">
         <span className="mt-1.5">
           <Glyph kind={order.kind} />
@@ -128,11 +128,12 @@ export function CarePlanner({
     return (
       <div className={loading ? "scanning" : ""}>
         {!open && !plan ? (
-          <div className="border border-dashed border-line-strong p-4">
-            <p className="text-[14px]">No care plan yet.</p>
-            <p className="mt-1 text-[13px] text-ink-2">Photograph the treatment chart or paste the doctor&apos;s notes. The AI lists the problems and every order written there. It never adds a drug or a dose.</p>
+          <div className="care-plan-empty">
+            <Icon name="rounds" size={30} />
+            <h4>Turn written orders into a care plan.</h4>
+            <p>Upload a treatment chart or paste the doctor&apos;s notes. Review the extracted orders before scheduling care.</p>
             <Button variant="solid" className="mt-3" onClick={() => setOpen(true)}>
-              Read chart or notes
+              Add a chart or notes <Icon name="plus" size={16} />
             </Button>
           </div>
         ) : (
@@ -141,7 +142,7 @@ export function CarePlanner({
               <Micro>Sample charts · handwritten, synthetic</Micro>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {demoCharts.map((c) => (
-                  <button key={c.src} type="button" disabled={loading} onClick={() => sample(c)} className="group border border-line text-left hover:border-ink-3">
+                  <button key={c.src} type="button" disabled={loading} onClick={() => sample(c)} className="group overflow-hidden rounded-xl border border-line text-left hover:border-ink-3">
                     <img src={c.src} alt="" className="h-24 w-full object-cover object-top opacity-90 group-hover:opacity-100" />
                     <span className="block px-2 py-1.5 text-[12px] leading-tight text-ink-2">{c.label}</span>
                   </button>
@@ -150,7 +151,7 @@ export function CarePlanner({
             </div>
             <div>
               <Micro>Or upload a photo or PDF</Micro>
-              <label className="mt-2 flex cursor-pointer items-center gap-3 border border-line px-3 py-2.5 text-[13px] hover:border-ink-3">
+              <label className="mt-2 flex cursor-pointer flex-wrap items-center gap-3 rounded-xl border border-dashed border-line-strong p-4 text-[13px] hover:border-ink-3">
                 <span className="btn btn-sm">Choose file</span>
                 <span className="truncate text-ink-2">{file?.label ?? "Treatment chart, lab report or discharge note"}</span>
                 <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => upload(e.target.files?.[0])} />
@@ -179,7 +180,7 @@ export function CarePlanner({
             {error && <p className="text-[13px] text-alert">{error}</p>}
             <div className="flex gap-2">
               <Button variant="solid" disabled={loading || (!note.trim() && !file)} onClick={() => read({ note, files: file ? [file.attachment] : [] })}>
-                {loading ? "Reading the chart…" : "Read with AI"}
+                {loading ? "Reading the chart…" : "Extract written orders"}
               </Button>
               {plan && (
                 <Button onClick={() => setOpen(false)} disabled={loading}>
@@ -228,7 +229,7 @@ export function CarePlanner({
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {plan.confirmedAt === null ? (
           <Button variant="solid" onClick={onConfirm}>
-            Doctor confirms · start reminders
+            Confirm plan & schedule care
           </Button>
         ) : (
           <Badge tone="ok">Live since {at(plan.confirmedAt)}</Badge>

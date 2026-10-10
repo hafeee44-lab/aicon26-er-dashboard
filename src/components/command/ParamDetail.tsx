@@ -11,7 +11,7 @@ const TITLE: Record<ParamKey, string> = {
   waiting: "Everyone waiting for a first doctor",
   overdue: "Everything that is late",
   ontime: "Care done on time",
-  beds: "Beds and corridor",
+  beds: "Available beds",
   doctors: "Doctors on shift",
 };
 
@@ -52,17 +52,17 @@ function PatientLine({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id:
       <button
         type="button"
         onClick={() => onOpen(p.id)}
-        className="grid w-full grid-cols-[22px_minmax(0,1fr)_auto] items-center gap-x-3 border-b border-line px-4 py-2 text-left hover:bg-raised sm:grid-cols-[22px_minmax(0,1fr)_minmax(0,1.4fr)_110px_120px]"
+        className="parameter-patient"
       >
         <LevelTile level={p.level} size="sm" />
         <span className="min-w-0 truncate font-bold">
-          {p.name} <span className="font-mono text-[11px] font-normal text-ink-3">{ageSex(p)}</span>
+          {p.name} <span className="text-[13px] font-normal text-ink-3">{ageSex(p)}</span>
         </span>
         <span className="hidden min-w-0 truncate text-[13px] text-ink-2 sm:block">{p.complaint}</span>
         <span className="hidden font-mono text-[12px] text-ink-2 tnum sm:block">
           {dur(waited)} / {TARGET_MINUTES[p.level] ? dur(TARGET_MINUTES[p.level]) : "now"}
         </span>
-        <span className={`text-right font-mono text-[12px] font-bold ${TONE_TEXT[status.tone]}`}>{status.code}</span>
+        <span className={`text-right text-[13px] font-semibold ${TONE_TEXT[status.tone]}`}>{status.code}</span>
       </button>
     </li>
   );
@@ -174,7 +174,7 @@ function Body({ kind, d, k, tasks, onOpen, onDone }: { kind: ParamKey; d: Depart
                   <span className="text-[11px] text-ink-3 capitalize">{doc.specialty}</span>
                 </span>
                 <span className={`text-right font-mono text-[11px] font-bold ${!doc.onShift ? "text-ink-3" : isBusy(d, doc) ? "text-warn" : "text-ok"}`}>
-                  {!doc.onShift ? "OFF · BACKUP" : p ? `WITH ${p.name.toUpperCase()} · ${dur(d.now - (p.seenAt ?? d.now))}` : "FREE"}
+                  {!doc.onShift ? "Off shift · backup" : p ? `With ${p.name} · ${dur(d.now - (p.seenAt ?? d.now))}` : "Available"}
                 </span>
               </button>
             </li>
@@ -182,7 +182,7 @@ function Body({ kind, d, k, tasks, onOpen, onDone }: { kind: ParamKey; d: Depart
         })}
       </ul>
       <div className="flex h-9 items-center border-t border-line px-4">
-        <Micro>Boarding · admitted, waiting for a ward bed · {boarding.length}</Micro>
+        <Micro>Waiting for a ward bed · {boarding.length}</Micro>
       </div>
       {boarding.length ? (
         <ul>
@@ -191,7 +191,7 @@ function Body({ kind, d, k, tasks, onOpen, onDone }: { kind: ParamKey; d: Depart
           ))}
         </ul>
       ) : (
-        <Empty>Nobody is boarding.</Empty>
+        <Empty>No patients are waiting for a ward bed.</Empty>
       )}
       <p className="px-4 py-3 font-mono text-[12px] text-ink-3">
         Nurses · {d.nurses.map((n) => `${shortStaff(n.name)} ${tasks.filter((t) => t.ownerId === n.id && t.status !== "done").length} open`).join(" · ")}
@@ -223,10 +223,10 @@ export function ParamDetail({
 }) {
   const fixes = actions.filter((a) => FIXES[kind].includes(a.kind));
   return (
-    <section id="param-detail" aria-label={TITLE[kind]} className="type-in border-b border-line-strong bg-panel">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-4 py-3">
+    <section id="param-detail" aria-label={TITLE[kind]} className="bg-panel">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line p-5">
         <div className="min-w-0">
-          <h2 className="text-[15px] font-bold">{TITLE[kind]}</h2>
+          <h2 className="text-[19px] font-semibold">{TITLE[kind]}</h2>
           <p className="mt-0.5 max-w-[80ch] text-[12px] text-ink-3">{EXPLAIN[kind]}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -240,7 +240,7 @@ export function ParamDetail({
           </Button>
         </div>
       </div>
-      <div className="thin-scroll max-h-[44vh] overflow-y-auto">
+      <div className="parameter-content">
         <Body kind={kind} d={dept} k={kpis} tasks={tasks} onOpen={onOpen} onDone={onDone} />
       </div>
     </section>
