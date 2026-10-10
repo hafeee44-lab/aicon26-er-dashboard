@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { TARGET_MINUTES, triage } from "@/er/engine";
-import { demoNotes } from "@/er/demo-notes";
+import { demoNotes, demoSlips } from "@/er/demo-notes";
 import type { Consciousness, Intake, IntakeResponse, Needs, Vitals } from "@/er/types";
+import { readUpload, toBase64 } from "@/lib/files";
+import type { Attachment } from "@/lib/types";
 import { DESTINATION_LABEL, dur } from "./format";
-import { Button, LevelTile, Micro, ModeBadge, Seg } from "./ui";
+import { AiMark, Button, LevelTile, Micro, ModeBadge, Seg } from "./ui";
 
 const LABELS = [
   "Chest pain · 67 M",
@@ -20,6 +22,7 @@ const LABELS = [
 ];
 
 type Mark = { start: number; end: number; color: string; label: string };
+type Photo = { attachment: Attachment; label: string; preview: string | null };
 
 const FIELDS: { key: keyof Vitals; label: string; color: string; step?: string }[] = [
   { key: "hr", label: "HR", color: "text-hr" },
@@ -45,7 +48,7 @@ function marks(note: string, intake: Intake): Mark[] {
   const found: Mark[] = [];
   for (const w of wanted) {
     if (!w.needle) continue;
-    const re = new RegExp(`(?<![\\d.])${w.needle.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?![\\d])`, "g");
+    const re = new RegExp(`(?<![\\d./:])${w.needle.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}(?![\\d])`, "g");
     for (const m of note.matchAll(re)) {
       const start = m.index ?? 0;
       const end = start + w.needle.length;
@@ -85,7 +88,8 @@ type Rec = {
 
 export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdmit: (intake: Intake, needs: Needs, review: string[]) => void }) {
   const [note, setNote] = useState("");
-  const [read, setRead] = useState<{ note: string; response: IntakeResponse } | null>(null);
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [read, setRead] = useState<{ note: string; photo: Photo | null; response: IntakeResponse } | null>(null);
   const [intake, setIntake] = useState<Intake | null>(null);
   const [needs, setNeeds] = useState<Needs | null>(null);
   const [loading, setLoading] = useState(false);
@@ -97,21 +101,49 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
     boxRef.current?.focus();
   }, []);
 
-  async function submit(text = note) {
-    if (!text.trim()) return;
+  async function submit(text = note, attached = photo) {
+    if (!text.trim() && !attached) return;
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/intake", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ note: text }) });
+      const res = await fetch("/api/intake", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ note: text, files: attached ? [attached.attachment] : [] }),
+      });
       const body = (await res.json()) as IntakeResponse & { error?: string };
       if (!res.ok) throw new Error(body.error || "The note could not be read");
-      setRead({ note: text, response: body });
+      setRead({ note: body.intake.note || text, photo: attached, response: body });
       setIntake({ ...body.intake, name: /^unknown$/i.test(body.intake.name.trim()) ? "" : body.intake.name });
       setNeeds(body.needs);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sample(slip: (typeof demoSlips)[number]) {
+    try {
+      const res = await fetch(slip.src);
+      if (!res.ok) throw new Error("The sample photo could not be loaded");
+      const attached = { attachment: { mimeType: slip.mimeType, data: await toBase64(await res.blob()) }, label: slip.label, preview: slip.src };
+      setPhoto(attached);
+      setNote("");
+      await submit("", attached);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  async function attach(f: File | undefined) {
+    if (!f) return;
+    setError("");
+    try {
+      const { attachment, preview } = await readUpload(f);
+      setPhoto({ attachment, label: f.name, preview });
+    } catch {
+      setError("That file could not be opened. Use a JPG, PNG or PDF (iPhone HEIC photos: take a screenshot instead).");
     }
   }
 
@@ -143,10 +175,14 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="intake-title">
       <div className="grid max-h-full w-full max-w-[1120px] overflow-y-auto border border-line-strong bg-bg lg:grid-cols-[1fr_1.05fr] lg:overflow-hidden">
-        <div className="flex flex-col border-b border-line lg:border-r lg:border-b-0">
-          <div className="flex h-14 items-center justify-between border-b border-line px-5">
-            <h2 id="intake-title" className="text-[15px] font-bold">
-              New arrival · the nurse&apos;s note
+        <div className="thin-scroll flex flex-col border-b border-line lg:max-h-[86vh] lg:overflow-y-auto lg:border-r lg:border-b-0">
+          <div className="flex h-14 items-center justify-between gap-3 border-b border-line px-5">
+            <h2 id="intake-title" className="flex min-w-0 items-center gap-2.5 text-[15px] font-bold">
+              New arrival
+              <AiMark>
+                <span className="hidden sm:inline">AI reads notes and photos</span>
+                <span className="sm:hidden">AI</span>
+              </AiMark>
             </h2>
             <Button size="sm" onClick={onClose} aria-keyshortcuts="Escape">
               Close
@@ -164,10 +200,28 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                     className={`btn btn-sm ${LABELS[i]?.startsWith("اردو") ? "font-urdu" : ""}`}
                     onClick={() => {
                       setNote(n);
-                      submit(n);
+                      setPhoto(null);
+                      submit(n, null);
                     }}
                   >
                     {LABELS[i] ?? n.slice(0, 24)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Micro>Or a photo of a handwritten note · synthetic</Micro>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {demoSlips.map((slip) => (
+                  <button
+                    key={slip.src}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => sample(slip)}
+                    className={`group border text-left hover:border-ink-3 ${photo?.preview === slip.src ? "border-pen" : "border-line"}`}
+                  >
+                    <img src={slip.src} alt="" className="h-16 w-full object-cover object-top opacity-90 group-hover:opacity-100" />
+                    <span className="block px-2 py-1.5 text-[12px] leading-tight text-ink-2">{slip.label}</span>
                   </button>
                 ))}
               </div>
@@ -183,25 +237,58 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
               }}
-              rows={5}
+              rows={4}
               dir="auto"
-              placeholder="67 saal mard, seene mein dard aur paseena, BP 88/60, pulse 112, sat 94"
+              placeholder={photo ? "Add anything the photo does not say (optional)" : "67 saal mard, seene mein dard aur paseena, BP 88/60, pulse 112, sat 94"}
               className="ruled w-full resize-none border border-line bg-raised px-4 py-1 font-mono text-[17px] leading-[28px] outline-none focus:border-ink-3"
             />
+            {photo && (
+              <div className="flex items-center gap-3 border border-pen/60 bg-raised p-2">
+                {photo.preview ? (
+                  <img src={photo.preview} alt="" className="h-12 w-16 flex-none border border-line object-cover object-top" />
+                ) : (
+                  <span className="grid h-12 w-16 flex-none place-items-center border border-line font-mono text-[11px] text-ink-3">PDF</span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[13px] font-bold">{photo.label}</span>
+                  <span className="block text-[12px] text-ink-3">The AI reads this with anything you type</span>
+                </span>
+                <Button size="sm" onClick={() => setPhoto(null)} disabled={loading} aria-label="Remove the attached photo">
+                  Remove
+                </Button>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="solid" size="lg" onClick={() => submit()} disabled={loading || !note.trim()}>
-                {loading ? "Reading…" : "Read note"}
+              <Button variant="solid" size="lg" onClick={() => submit()} disabled={loading || (!note.trim() && !photo)}>
+                <span aria-hidden>✦</span>
+                {loading ? "Reading…" : "Read with AI"}
                 <kbd className="font-mono text-[10px] opacity-60">⌘↵</kbd>
               </Button>
-              <Button size="lg" onClick={dictate} disabled={listening}>
+              <label className={`btn has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink ${loading ? "pointer-events-none opacity-50" : ""}`}>
+                Attach photo or PDF
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="sr-only"
+                  onChange={(e) => {
+                    attach(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <Button onClick={dictate} disabled={listening}>
                 {listening ? "Listening…" : "Dictate"}
               </Button>
             </div>
             {error && <p className="text-[13px] text-alert">{error}</p>}
             {read && intake && (
               <div className="border-t border-line pt-4">
-                <Micro>What the AI took from the note</Micro>
-                <div className="mt-2">
+                <div className="flex items-center gap-2">
+                  <Micro>{read.photo ? "What the AI read from the photo" : "What the AI took from the note"}</Micro>
+                  <AiMark />
+                </div>
+                <div className="mt-2 flex items-start gap-3">
+                  {read.photo?.preview && <img src={read.photo.preview} alt={`The attached photo: ${read.photo.label}`} className="h-28 w-24 flex-none border border-line object-cover object-top" />}
                   <Highlighted note={read.note} intake={intake} />
                 </div>
               </div>
@@ -213,14 +300,17 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
           {!result || !intake || !needs ? (
             <div className="flex flex-1 flex-col justify-center gap-5 p-8">
               {[
-                ["01", "The AI reads the note", "Vitals, complaint and likely needs, in English, Urdu or Roman Urdu. Anything it had to guess is marked for you to check."],
+                ["01", "The AI reads the note or photo", "Typed, dictated or photographed, in English, Urdu or Roman Urdu: vitals, complaint and likely needs. Anything it had to guess is marked for you to check."],
                 ["02", "Code sets the level", "An ESI checklist decides levels 1 to 5. The AI can only raise priority, never lower it."],
                 ["03", "You admit", "The patient joins the board with a due time: L1 now, L2 15 min, L3 30, L4 60, L5 120."],
               ].map(([n, t, b]) => (
                 <div key={n} className="grid grid-cols-[32px_1fr] gap-3">
                   <span className="font-mono text-[12px] text-ink-3">{n}</span>
                   <div>
-                    <div className="font-bold">{t}</div>
+                    <div className="flex flex-wrap items-center gap-2 font-bold">
+                      {t}
+                      {n === "01" && <AiMark />}
+                    </div>
                     <p className="mt-0.5 text-[13px] text-ink-2">{b}</p>
                   </div>
                 </div>
@@ -306,7 +396,10 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
               </div>
 
               <div className="border-b border-line p-5 text-[13px]">
-                <Micro>Predicted needs · not a diagnosis</Micro>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Micro>Predicted needs · not a diagnosis</Micro>
+                  <AiMark>AI prediction</AiMark>
+                </div>
                 <p className="mt-1.5 text-ink-2">
                   <span className="text-ink capitalize">{needs.specialty}</span> · {needs.resources.join(", ").replaceAll("_", " ") || "examination only"} · likely {DESTINATION_LABEL[needs.destination].toLowerCase()}
                   {needs.highRisk && <span className="font-bold text-alert"> · high risk</span>}
@@ -314,7 +407,7 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                 {needs.reason && <p className="mt-1.5 text-ink-3">{needs.reason}</p>}
                 <label className="mt-3 flex items-center gap-2 text-ink-2">
                   <input type="checkbox" checked={needs.highRisk} onChange={(e) => setNeeds({ ...needs, highRisk: e.target.checked })} />
-                  High-risk situation (raises the level, never lowers it)
+                  High-risk situation, as judged by the AI (raises the level, never lowers it)
                 </label>
               </div>
 

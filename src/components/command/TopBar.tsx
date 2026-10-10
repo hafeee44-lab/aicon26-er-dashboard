@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Policy } from "@/er/types";
 import { at } from "./format";
 import { Button, Seg } from "./ui";
@@ -50,6 +50,35 @@ function Group({ label, children, className = "" }: { label: ReactNode; children
       <span className="micro flex h-4 items-center whitespace-nowrap">{label}</span>
       <div className="flex min-h-[34px] items-end gap-1.5">{children}</div>
     </div>
+  );
+}
+
+type AiState = { provider: string; model: string; ready: boolean };
+
+function AiStatus() {
+  const [status, setStatus] = useState<AiState | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    fetch("/api/status")
+      .then((r) => r.json() as Promise<AiState>)
+      .then((s) => live && setStatus(s))
+      .catch(() => live && setStatus({ provider: "", model: "", ready: false }));
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (!status) return null;
+  const name = status.provider ? status.provider[0].toUpperCase() + status.provider.slice(1) : "AI";
+  return (
+    <span
+      title={status.ready ? `The AI reads notes, photos and charts and writes the brief. Model: ${status.model}` : "No AI key: notes are read by built-in rules"}
+      className={`hidden h-8 items-center gap-1.5 border px-2.5 font-mono text-[11px] font-bold tracking-[0.06em] whitespace-nowrap uppercase xl:inline-flex ${status.ready ? "border-pen text-pen" : "border-warn text-warn"}`}
+    >
+      <span aria-hidden>✦</span>
+      {status.ready ? `AI on · ${name}` : "AI off · rules"}
+    </span>
   );
 }
 
@@ -107,11 +136,13 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
         <Brand />
         <Nav view={view} onView={onView} className="hidden h-full items-stretch lg:flex" />
         <div className="ml-auto flex items-center gap-2">
+          <AiStatus />
           <button type="button" onClick={toggleTheme} className="btn btn-sm" aria-label="Switch between monitor and paper themes">
             <span className="when-monitor">Paper</span>
             <span className="when-paper">Monitor</span>
           </button>
           <Button variant="solid" onClick={onNew} aria-keyshortcuts="n">
+            <span aria-hidden>✦</span>
             New arrival <kbd className="hidden font-mono text-[10px] opacity-60 sm:inline">N</kbd>
           </Button>
         </div>

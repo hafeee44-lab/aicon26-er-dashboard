@@ -2,7 +2,21 @@ import type { Language } from "@/lib/types";
 import { RESOURCES, SPECIALTIES } from "./intake";
 import type { AdviseRequest, CareRequest } from "./types";
 
-export function intakePrompt() {
+const INTAKE_FILES = `Photos and PDFs:
+- The note may come with a photo or PDF: a handwritten triage note, an ambulance handover or a referral slip. Read it like a note, and use the typed note too if there is one.
+- Also return "transcript" at the top level of the JSON: the text of the attachment copied line by line as written (at most 600 characters), so the nurse can check what you read. Copy numbers exactly. Leave out stamps, letterheads and signatures.
+- If part of the attachment is unreadable, use null for that field and name it in unsure.`;
+
+export function intakeInput(note: string, files: number) {
+  const attached = files ? `${files} attached photo(s) or PDF(s) of the patient's note.\n` : "";
+  return `${attached}Note:\n${note.slice(0, 4000) || "(none, read the attachments)"}`;
+}
+
+export function intakePrompt(files = false) {
+  return files ? `${intakeBase()}\n\n${INTAKE_FILES}` : intakeBase();
+}
+
+function intakeBase() {
   return `You are the intake step of an emergency department dashboard in Pakistan.
 A nurse typed or dictated a short note about one patient. It may be in English, Urdu or Roman Urdu, with abbreviations such as "67M", "BP 88/60", "sat 94" or "HR 112".
 

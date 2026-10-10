@@ -1,7 +1,7 @@
 import { LEVELS } from "@/er/engine";
 import { evidence } from "@/er/evidence";
 import type { ReactNode } from "react";
-import { LevelTile, Micro } from "./ui";
+import { AiMark, LevelTile, Micro } from "./ui";
 
 function Dots({ total, marked, tone, label, value, caption }: { total: number; marked: number; tone: "alert" | "ok" | "l1"; label: string; value: string; caption: string }) {
   const color = tone === "alert" ? "bg-alert" : tone === "ok" ? "bg-ok" : "bg-l1";
@@ -21,11 +21,14 @@ function Dots({ total, marked, tone, label, value, caption }: { total: number; m
   );
 }
 
-function Chapter({ n, title, lead, children }: { n: string; title: string; lead: string; children: ReactNode }) {
+function Chapter({ n, title, lead, ai = false, children }: { n: string; title: string; lead: string; ai?: boolean; children: ReactNode }) {
   return (
     <section className="grid gap-8 border-t border-line py-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
       <div>
-        <span className="font-mono text-[12px] text-ink-3">{n}</span>
+        <span className="flex flex-wrap items-center gap-2 font-mono text-[12px] text-ink-3">
+          {n}
+          {ai && <AiMark>AI tested</AiMark>}
+        </span>
         <h2 className="mt-2 text-[30px] leading-[1.1] font-bold tracking-[-0.01em] sm:text-[38px]">{title}</h2>
         <p className="mt-4 max-w-[46ch] text-[16px] leading-relaxed text-ink-2">{lead}</p>
       </div>
@@ -92,6 +95,7 @@ export function EvidenceView() {
 
       <Chapter
         n="01 · At the door"
+        ai
         title="We missed 2 urgent patients. The triage nurses missed 8."
         lead={`Out of ${t.ours.urgentTotal} patients the experts rated level 1 or 2, how many were sent to the back of the queue (level 3 or lower)? Without the AI reading the notes, code alone would miss ${t.codeOnly.urgentMissed}.`}
       >
@@ -164,6 +168,7 @@ export function EvidenceView() {
 
       <Chapter
         n="05 · On the ward"
+        ai
         title={`${c.ordersExpected} of ${c.ordersExpected} orders read from notes and handwritten charts. None invented.`}
         lead={`${c.cases} synthetic notes and chart photos we wrote, with traps: a missing frequency, stopped drugs, a dose already given. The AI scheduled ${c.stoppedOrdersScheduled} of ${c.stoppedOrdersTotal} stopped drugs and told the nurse why it left them out. Real handwriting will be harder, so every task shows the words it came from and a doctor confirms the plan.`}
       >
