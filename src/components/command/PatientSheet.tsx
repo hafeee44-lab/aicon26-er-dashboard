@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { resourceCount } from "@/er/engine";
 import type { CareResponse, Department, Patient, TaskView } from "@/er/types";
-import { ageSex, at, bedLabel, DESTINATION_LABEL, dur, shortStaff, STAGE_LABEL, staffName } from "./format";
+import { ageSex, at, bedLabel, DESTINATION_LABEL, doorStatus, dur, isActive, shortStaff, STAGE_LABEL, staffName, TONE_TEXT } from "./format";
 import { CarePlanner } from "./CarePlanner";
 import { TaskRow } from "./Tasks";
 import { Badge, Button, LevelTile, Micro } from "./ui";
@@ -44,10 +44,16 @@ export function PatientSheet({
   onPlan,
   onConfirm,
   onDone,
+  onPrev,
+  onNext,
+  position,
 }: {
   dept: Department;
   patient: Patient;
   tasks: TaskView[];
+  onPrev?: () => void;
+  onNext?: () => void;
+  position?: string;
   onClose: () => void;
   onPlan: (draft: CareResponse["plan"]) => void;
   onConfirm: () => void;
@@ -77,12 +83,31 @@ export function PatientSheet({
               <span className="font-mono">{ageSex(p)}</span> · {p.complaint}
             </p>
             <p className="mt-1 font-mono text-[12px] text-ink-3">
-              {STAGE_LABEL[p.stage]} · in {at(p.arrivedAt)} · {p.seenAt === null ? `waiting ${dur(waited)}` : `seen after ${dur(waited)}`}
+              {isActive(p) && (
+                <>
+                  <span className={`font-bold ${TONE_TEXT[doorStatus(dept, p).tone]}`}>{doorStatus(dept, p).code}</span> ·{" "}
+                </>
+              )}
+              {STAGE_LABEL[p.stage]} · in {at(p.arrivedAt)} ·{" "}
+              {p.seenAt === null ? `waiting ${dur(waited)}` : `seen after ${dur(waited)}`}
             </p>
           </div>
-          <Button ref={closeRef} size="sm" onClick={onClose} aria-keyshortcuts="Escape">
-            Close
-          </Button>
+          <div className="flex flex-none flex-col items-end gap-2">
+            <Button ref={closeRef} size="sm" onClick={onClose} aria-keyshortcuts="Escape">
+              Close
+            </Button>
+            {position && (
+              <div className="flex items-center gap-1">
+                <Button size="sm" onClick={onPrev} disabled={!onPrev} aria-label="Previous patient" aria-keyshortcuts="ArrowLeft">
+                  ←
+                </Button>
+                <span className="w-12 text-center font-mono text-[11px] text-ink-3 tnum">{position}</span>
+                <Button size="sm" onClick={onNext} disabled={!onNext} aria-label="Next patient" aria-keyshortcuts="ArrowRight">
+                  →
+                </Button>
+              </div>
+            )}
+          </div>
         </header>
 
         <Section title={`Why level ${p.level}`}>

@@ -15,11 +15,18 @@ import {
   surge as surgeOf,
   tick,
 } from "@/er/engine";
+import { evidence } from "@/er/evidence";
 import { mockDepartment, surgeCases } from "@/er/mock";
 import { replayCases } from "@/er/replay";
 import type { ActionKind, CarePlan, Department, Intake, Needs, Policy } from "@/er/types";
 
-export type Speed = 1 | 5 | 15;
+export const MINUTES_PER_SECOND = 5;
+
+const PEAK = evidence.shifts[evidence.shifts.length - 1];
+const POLICY_LOG: Record<Policy, string> = {
+  smart: `Smart: the most urgent patient is picked first. At peak, urgent patients waited ${PEAK.smart.urgentWait.avg} min this way (first come: ${PEAK.firstCome.urgentWait.avg} min)`,
+  first_come: `First come, first served: patients are picked in arrival order. At peak, urgent patients waited ${PEAK.firstCome.urgentWait.avg} min this way (smart: ${PEAK.smart.urgentWait.avg} min)`,
+};
 export type LogTone = "normal" | "alert" | "ok";
 export type LogEntry = { id: number; at: number; text: string; tone: LogTone };
 
@@ -50,13 +57,12 @@ function withLog(s: State, dept: Department, text: string, tone: LogTone = "norm
 export function useCommand() {
   const [state, setState] = useState<State>(initial);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState<Speed>(5);
 
   useEffect(() => {
     if (!playing) return;
-    const id = window.setInterval(() => setState((s) => ({ ...s, dept: tick(s.dept, speed) })), 1000);
+    const id = window.setInterval(() => setState((s) => ({ ...s, dept: tick(s.dept, MINUTES_PER_SECOND) })), 1000);
     return () => window.clearInterval(id);
-  }, [playing, speed]);
+  }, [playing]);
 
   const dept = state.dept;
   const derived = useMemo(() => ({ kpis: kpisOf(dept), actions: actionsOf(dept), tasks: rounds(dept) }), [dept]);
@@ -81,7 +87,7 @@ export function useCommand() {
   }, []);
 
   const changePolicy = useCallback((policy: Policy) => {
-    setState((s) => withLog(s, policyOf(s.dept, policy), policy === "smart" ? "Smart allocation switched on" : "Switched to first come, first served"));
+    setState((s) => (s.dept.policy === policy ? s : withLog(s, policyOf(s.dept, policy), POLICY_LOG[policy], policy === "smart" ? "ok" : "alert")));
   }, []);
 
   const plan = useCallback((patientId: string, draft: Omit<CarePlan, "confirmedAt">) => {
@@ -96,20 +102,22 @@ export function useCommand() {
     setState((s) => withLog(s, completeOf(s.dept, taskId), `Done: ${label}`, "ok"));
   }, []);
 
+  const togglePlaying = useCallback(() => setPlaying((p) => !p), []);
+
   const reset = useCallback(() => {
     setPlaying(false);
-    setState(initial());
+    setState((s) => {
+      const fresh = initial();
+      return { ...fresh, seq: s.seq + 1, log: [{ ...fresh.log[0], id: s.seq, text: "Shift reset. Handover: 8 patients in the ER, 3 on the ward" }] };
+    });
   }, []);
 
   return {
     dept,
     ...derived,
     log: state.log,
-    nextPatientId: `p${dept.patients.length + 1}`,
     playing,
-    togglePlaying: () => setPlaying((p) => !p),
-    speed,
-    setSpeed,
+    togglePlaying,
     surge,
     admit,
     apply,

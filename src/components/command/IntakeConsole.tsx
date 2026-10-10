@@ -74,7 +74,14 @@ function Highlighted({ note, intake }: { note: string; intake: Intake }) {
   return <p className="font-mono text-[15px] leading-relaxed whitespace-pre-wrap">{parts}</p>;
 }
 
-type Rec = { lang: string; interimResults: boolean; onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void; onend: () => void; start: () => void };
+type Rec = {
+  lang: string;
+  interimResults: boolean;
+  onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
+  onerror: (e: { error: string }) => void;
+  onend: () => void;
+  start: () => void;
+};
 
 export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdmit: (intake: Intake, needs: Needs, review: string[]) => void }) {
   const [note, setNote] = useState("");
@@ -120,6 +127,10 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
     rec.interimResults = false;
     rec.onresult = (e) => setNote((n) => `${n} ${Array.from(e.results).map((r) => r[0].transcript).join(" ")}`.trim());
     rec.onend = () => setListening(false);
+    rec.onerror = (e) => {
+      setListening(false);
+      setError(e.error === "not-allowed" ? "Allow microphone access to dictate." : "Dictation stopped. Type the note instead.");
+    };
     setListening(true);
     rec.start();
   }
@@ -146,7 +157,16 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
               <Micro>Try a demo note · English, Roman Urdu, Urdu</Micro>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {demoNotes.map((n, i) => (
-                  <button key={n} type="button" className={`btn btn-sm ${LABELS[i]?.startsWith("اردو") ? "font-urdu" : ""}`} onClick={() => { setNote(n); submit(n); }}>
+                  <button
+                    key={n}
+                    type="button"
+                    disabled={loading}
+                    className={`btn btn-sm ${LABELS[i]?.startsWith("اردو") ? "font-urdu" : ""}`}
+                    onClick={() => {
+                      setNote(n);
+                      submit(n);
+                    }}
+                  >
                     {LABELS[i] ?? n.slice(0, 24)}
                   </button>
                 ))}

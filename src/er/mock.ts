@@ -1,5 +1,5 @@
-import { confirmPlan, planCare, simulate } from "./engine";
-import type { CareOrder, Department, Intake, Level, Needs, Specialty, SurgeCase, Vitals } from "./types";
+import { confirmPlan, planCare, simulate, triage } from "./engine";
+import type { CareOrder, Department, Intake, Needs, Resource, Specialty, SurgeCase, Vitals } from "./types";
 
 const vitals = (v: Partial<Vitals>): Vitals => ({
   hr: null,
@@ -121,7 +121,8 @@ type WardPatient = {
   age: number;
   sex: "male" | "female";
   complaint: string;
-  level: Level;
+  vitals: Partial<Vitals>;
+  resources: Resource[];
   specialty: Specialty;
   nurseId: string;
   plannedAt: number;
@@ -139,7 +140,8 @@ export const wardPatients: WardPatient[] = [
     age: 34,
     sex: "male",
     complaint: "Fractured right ankle with a wound, and acute diarrhoea",
-    level: 3,
+    vitals: { hr: 96, rr: 18, sbp: 118, dbp: 76, spo2: 98, temp: 37.4, pain: 6 },
+    resources: ["xray", "iv_fluids", "iv_meds"],
     specialty: "orthopaedics",
     nurseId: "n4",
     plannedAt: -60,
@@ -159,7 +161,8 @@ export const wardPatients: WardPatient[] = [
     age: 61,
     sex: "female",
     complaint: "Pneumonia",
-    level: 2,
+    vitals: { hr: 98, rr: 24, sbp: 128, dbp: 78, spo2: 91, temp: 38.2, pain: 3 },
+    resources: ["xray", "labs", "iv_meds"],
     specialty: "medicine",
     nurseId: "n3",
     plannedAt: -150,
@@ -178,7 +181,8 @@ export const wardPatients: WardPatient[] = [
     age: 58,
     sex: "male",
     complaint: "Infected diabetic foot ulcer",
-    level: 3,
+    vitals: { hr: 92, rr: 18, sbp: 142, dbp: 86, spo2: 97, temp: 37.9, pain: 5 },
+    resources: ["labs", "iv_meds", "procedure"],
     specialty: "surgery",
     nurseId: "n4",
     plannedAt: 15,
@@ -197,19 +201,17 @@ function addWardPatient(dept: Department, w: WardPatient): Department {
   const now = dept.now;
   let d = structuredClone(dept);
   const doctor = d.doctors.find((doc) => doc.specialty === w.specialty) ?? d.doctors[0];
+  const intake: Intake = { name: w.name, age: w.age, sex: w.sex, complaint: w.complaint, vitals: vitals(w.vitals), note: "" };
+  const needs: Needs = { specialty: w.specialty, resources: w.resources, destination: "ward", highRisk: false, reason: "Admitted to the ward from the emergency department." };
+  const { level, flags } = triage(intake, needs);
 
   d.patients.push({
+    ...intake,
     id: w.id,
-    name: w.name,
-    age: w.age,
-    sex: w.sex,
-    complaint: w.complaint,
-    vitals: vitals({}),
-    note: "",
     arrivedAt: w.plannedAt - 180,
-    level: w.level,
-    flags: [],
-    needs: { specialty: w.specialty, resources: [], destination: "ward", highRisk: false, reason: "Admitted to the ward" },
+    level,
+    flags,
+    needs,
     review: [],
     stage: "admitted",
     doctorId: doctor.id,

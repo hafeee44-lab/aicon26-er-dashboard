@@ -154,6 +154,8 @@ Tick these off in your commits. Ask your teammate before starting a task from th
 - **Type:** Atkinson Hyperlegible Next for text, `font-mono` (Atkinson Hyperlegible Mono) for every number and code, `.hand` (Caveat) only for words quoted from a chart, and `font-urdu` for Urdu.
 - **Themes:** `data-theme="monitor"` (dark, default) and `"paper"` (light). Every new color must be a token defined for both themes.
 - **Primitives:** `Button`, `Seg`, `LevelTile`, `Glyph`, `Badge`, `SectionHead` and `Micro` in `ui.tsx`.
+- **Clock:** the clock runs at one fixed speed, `MINUTES_PER_SECOND` (5) in `useCommand.ts`. There is no speed picker, so a demo always plays the same way.
+- **Waiting list order:** the board shows the engine's real pick order (`waitingQueue(d)` in `engine.ts`), numbered with NEXT first. Switching "Who goes first" reorders it at once, so the policy's effect is visible.
 
 **Next for frontend:**
 
