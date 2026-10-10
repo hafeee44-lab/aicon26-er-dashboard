@@ -1,5 +1,5 @@
 import { clock, TARGET_MINUTES } from "@/er/engine";
-import type { Department, Frequency, Patient, Stage, TaskKind, TaskStatus } from "@/er/types";
+import type { Consciousness, Department, Frequency, Level, Patient, Resource, Specialty, Stage, TaskKind, TaskStatus } from "@/er/types";
 
 export type Tone = "alert" | "warn" | "ok" | "normal" | "muted";
 
@@ -121,10 +121,40 @@ export const FREQ_LABEL: Record<Frequency, string> = {
 
 export const DESTINATION_LABEL = { discharge: "Home", ward: "Ward", icu: "ICU", theatre: "Theatre" } as const;
 
+export const SPECIALTY_LABEL: Record<Specialty, string> = {
+  emergency: "Emergency medicine",
+  medicine: "Internal medicine",
+  surgery: "Surgery",
+  cardiology: "Cardiology",
+  obgyn: "Obstetrics and gynaecology",
+  paediatrics: "Paediatrics",
+  orthopaedics: "Orthopaedics",
+};
+
+export const LEVEL_NAME: Record<Level, string> = { 1: "Resuscitation", 2: "Emergent", 3: "Urgent", 4: "Less urgent", 5: "Non-urgent" };
+
+export const RESOURCE_LABEL: Record<Resource, string> = {
+  labs: "blood tests",
+  ecg: "ECG",
+  xray: "X-ray",
+  ct: "CT scan",
+  ultrasound: "ultrasound",
+  iv_fluids: "IV fluids",
+  iv_meds: "IV medicines",
+  specialist: "a specialist",
+  procedure: "a procedure",
+  complex_procedure: "a procedure under sedation",
+};
+
+export const AVPU_LABEL: Record<Consciousness, string> = { alert: "alert", voice: "responds to voice", pain: "responds only to pain", unresponsive: "unresponsive" };
+
 export function initials(name: string) {
+  const visit = name.match(/^Visit\s+(\d+)/);
+  if (visit) return `#${visit[1].slice(-2)}`;
   return name
-    .replace(/^(Visit)\s+/, "#")
+    .replace(/^(Dr\.?|Nurse)\s+/, "")
     .split(/\s+/)
+    .filter((w) => /^\p{L}/u.test(w))
     .slice(0, 2)
     .map((w) => w[0])
     .join("")

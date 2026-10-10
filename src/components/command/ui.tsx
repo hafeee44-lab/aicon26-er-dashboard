@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { Level, TaskKind, TaskStatus } from "@/er/types";
-import { KIND_GLYPH, KIND_LABEL, STATUS_TONE, TONE_TEXT, type Tone } from "./format";
+import { initials, KIND_GLYPH, KIND_LABEL, LEVEL_NAME, STATUS_TONE, TONE_TEXT, type Tone } from "./format";
 
 export function Micro({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <span className={`micro ${className}`}>{children}</span>;
@@ -8,8 +8,19 @@ export function Micro({ children, className = "" }: { children: ReactNode; class
 
 export function LevelTile({ level, size = "md" }: { level: Level; size?: "sm" | "md" | "lg" }) {
   return (
-    <span className={`lvl lvl-${level} lvl-${size}`} role="img" aria-label={`Triage level ${level}`}>
+    <span className={`lvl lvl-${level} lvl-${size}`} role="img" aria-label={`Triage level ${level}, ${LEVEL_NAME[level].toLowerCase()}`}>
       {level}
+    </span>
+  );
+}
+
+export function Avatar({ name, size = "md", muted = false }: { name: string; size?: "md" | "lg"; muted?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid flex-none place-items-center border font-mono font-bold tracking-[0.04em] ${size === "lg" ? "size-12 text-[16px]" : "size-9 text-[12px]"} ${muted ? "border-dashed border-line-strong text-ink-3" : "border-line-strong bg-raised text-ink-2"}`}
+    >
+      {initials(name) || "?"}
     </span>
   );
 }

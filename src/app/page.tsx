@@ -156,7 +156,7 @@ export default function Home() {
 
         {view === "floor" && (
           <main>
-            <FloorPlan dept={dept} tasks={cmd.tasks} onOpen={setOpenId} />
+            <FloorPlan dept={dept} tasks={cmd.tasks} onOpen={setOpenId} onCallBackup={() => cmd.apply("call_doctor")} />
           </main>
         )}
 

@@ -49,6 +49,7 @@ Everything for the ER dashboard, all visible in the commit history:
 - **Frontend:**
   - Haider built the first dashboard screens and the state hook.
   - The final "Instrument" UI (`src/components/command/`) was a full redesign by Hafi. It is modelled on award-winning bedside monitors and hospital command centres, and uses Atkinson Hyperlegible for legibility on a projector.
+  - The patient overview and the care-team cards are adapted from Haider's later redesign.
 
 ## Third-party resources
 
