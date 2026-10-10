@@ -3,8 +3,8 @@ import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next, Caveat, Noto_Na
 import type { ReactNode } from "react";
 import "./globals.css";
 
-const ui = Atkinson_Hyperlegible_Next({ variable: "--font-ui", subsets: ["latin"] });
-const data = Atkinson_Hyperlegible_Mono({ variable: "--font-data", subsets: ["latin"] });
+const ui = Atkinson_Hyperlegible_Next({ variable: "--font-ui", subsets: ["latin"], adjustFontFallback: false });
+const data = Atkinson_Hyperlegible_Mono({ variable: "--font-data", subsets: ["latin"], adjustFontFallback: false });
 const pen = Caveat({ variable: "--font-pen", subsets: ["latin"] });
 const nastaliq = Noto_Nastaliq_Urdu({ variable: "--font-nastaliq", subsets: ["arabic"], weight: ["400", "700"] });
 

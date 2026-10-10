@@ -212,7 +212,7 @@ button:disabled {
 .btn-alert {
   border-color: var(--alert);
   background: var(--alert);
-  color: #fff;
+  color: var(--inverse);
 }
 
 .btn-alert:hover:not(:disabled) {
@@ -241,6 +241,7 @@ button:disabled {
 
 .seg > button {
   height: 32px;
+  white-space: nowrap;
   padding: 0 0.7rem;
   color: var(--ink-3);
   font-family: var(--font-mono);

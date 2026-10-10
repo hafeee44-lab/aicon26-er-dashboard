@@ -102,16 +102,26 @@ export function CarePlanner({
   }
 
   async function sample(chart: (typeof demoCharts)[number]) {
-    const blob = await (await fetch(chart.src)).blob();
-    const attachment = { mimeType: chart.mimeType, data: await blobToBase64(blob) };
-    setFile({ attachment, label: chart.label, preview: chart.src });
-    await read({ note: "", files: [attachment] });
+    try {
+      const res = await fetch(chart.src);
+      if (!res.ok) throw new Error("The sample chart could not be loaded");
+      const attachment = { mimeType: chart.mimeType, data: await blobToBase64(await res.blob()) };
+      setFile({ attachment, label: chart.label, preview: chart.src });
+      await read({ note: "", files: [attachment] });
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
 
   async function upload(f: File | undefined) {
     if (!f) return;
-    const { attachment, preview } = await readUpload(f);
-    setFile({ attachment, label: f.name, preview });
+    setError("");
+    try {
+      const { attachment, preview } = await readUpload(f);
+      setFile({ attachment, label: f.name, preview });
+    } catch {
+      setError("That file could not be opened. Use a JPG, PNG or PDF (iPhone HEIC photos: take a screenshot instead).");
+    }
   }
 
   if (open || !plan) {

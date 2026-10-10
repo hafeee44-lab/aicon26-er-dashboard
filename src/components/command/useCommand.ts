@@ -81,7 +81,13 @@ export function useCommand() {
   }, []);
 
   const changePolicy = useCallback((policy: Policy) => {
-    setState((s) => withLog(s, policyOf(s.dept, policy), policy === "smart" ? "Smart allocation switched on" : "Switched to first come, first served"));
+    setState((s) =>
+      withLog(
+        s,
+        policyOf(s.dept, policy),
+        policy === "smart" ? "Smart allocation on: urgent patients first. Run the clock to compare" : "First come, first served: arrival order. Run the clock to compare",
+      ),
+    );
   }, []);
 
   const plan = useCallback((patientId: string, draft: Omit<CarePlan, "confirmedAt">) => {
@@ -96,18 +102,22 @@ export function useCommand() {
     setState((s) => withLog(s, completeOf(s.dept, taskId), `Done: ${label}`, "ok"));
   }, []);
 
+  const togglePlaying = useCallback(() => setPlaying((p) => !p), []);
+
   const reset = useCallback(() => {
     setPlaying(false);
-    setState(initial());
+    setState((s) => {
+      const fresh = initial();
+      return { ...fresh, seq: s.seq + 1, log: [{ ...fresh.log[0], id: s.seq, text: "Shift reset. Handover: 8 patients in the ER, 3 on the ward" }] };
+    });
   }, []);
 
   return {
     dept,
     ...derived,
     log: state.log,
-    nextPatientId: `p${dept.patients.length + 1}`,
     playing,
-    togglePlaying: () => setPlaying((p) => !p),
+    togglePlaying,
     speed,
     setSpeed,
     surge,

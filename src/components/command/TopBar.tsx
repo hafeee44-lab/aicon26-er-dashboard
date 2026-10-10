@@ -92,7 +92,7 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
   const progress = Math.min(1, Math.max(0, (dept.now - SHIFT_START) / SHIFT_LENGTH));
 
   return (
-    <header className={`sticky top-0 z-30 border-b border-line bg-bg ${playing ? "ecg-live" : ""}`}>
+    <header className={`z-30 border-b border-line bg-bg lg:sticky lg:top-0 ${playing ? "ecg-live" : ""}`}>
       <div className="flex h-14 items-center gap-6 border-b border-line px-4 lg:px-6">
         <Brand />
         <Nav view={view} onView={onView} className="hidden h-full items-stretch lg:flex" />
@@ -107,16 +107,26 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
         </div>
       </div>
 
-      <div className="scroll-x flex h-[70px] items-center gap-5 bg-panel px-4 lg:px-6">
+      <div className="scroll-x flex min-h-[70px] items-center gap-x-4 gap-y-3 bg-panel px-4 py-3 md:flex-wrap md:overflow-visible xl:gap-x-5 xl:px-6">
         <div className="flex flex-none items-center gap-3">
           <div className="font-mono text-[40px] leading-none font-bold tracking-tight tnum" aria-label={`Shift time ${at(dept.now)}`}>
             {at(dept.now)}
           </div>
-          <div className="w-28 whitespace-nowrap">
-            <Micro>Shift 08–20</Micro>
-            <div className="relative mt-1.5 h-1 bg-line">
+          <div className="w-24 whitespace-nowrap">
+            <span aria-live="polite">
+            {playing ? (
+              <span className="micro flex items-center gap-1.5 text-alert!">
+                <span className="tick-dot size-1.5 rounded-full bg-alert" aria-hidden />
+                Live ×{cmd.speed}
+              </span>
+            ) : (
+              <Micro>Paused</Micro>
+            )}
+            </span>
+            <div className="relative mt-1.5 h-1 bg-line" role="img" aria-label={`Shift ${Math.round(progress * 100)}% through, 08:00 to 20:00`}>
               <div className="absolute inset-y-0 left-0 bg-ink-2" style={{ width: `${progress * 100}%` }} />
             </div>
+            <span className="mt-1 block font-mono text-[10px] text-ink-3">08:00 → 20:00</span>
           </div>
         </div>
 
@@ -140,7 +150,7 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
           </Button>
         </div>
 
-        <div className="h-9 w-px flex-none bg-line" />
+        <div className="hidden h-9 w-px flex-none bg-line xl:block" />
 
         <div className="flex flex-none items-center gap-3">
           <div>
@@ -157,9 +167,12 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
               />
             </div>
           </div>
+          <p className="hidden max-w-[150px] text-[11px] leading-snug text-ink-3 xl:block">
+            {dept.policy === "smart" ? "Urgency, wait and specialty decide beds and doctors." : "Arrival order. Any free bed, any free doctor."}
+          </p>
         </div>
 
-        <div className="ml-auto flex flex-none items-center gap-3">
+        <div className="flex flex-none items-center gap-3 md:ml-auto">
           <div>
             <Micro>Inject a surge · 15 arrivals</Micro>
             <div className="mt-1 flex gap-1.5">
@@ -171,6 +184,11 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
               </Button>
             </div>
           </div>
+          <p className="hidden font-mono text-[10px] leading-relaxed text-ink-3 2xl:block">
+            N new arrival
+            <br />
+            Space run · 1–4 views
+          </p>
         </div>
       </div>
     </header>
