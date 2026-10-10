@@ -2,7 +2,7 @@ import type { Attachment } from "@/lib/types";
 
 const MAX_SIDE = 1600;
 
-function toBase64(file: File): Promise<string> {
+export function toBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result).split(",")[1]);

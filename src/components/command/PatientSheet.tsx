@@ -6,7 +6,7 @@ import type { CareResponse, Department, Patient, TaskView, Zone } from "@/er/typ
 import { ageSex, at, AVPU_LABEL, DESTINATION_LABEL, doorStatus, dur, isActive, LEVEL_NAME, onCorridor, RESOURCE_LABEL, SPECIALTY_LABEL, STAGE_LABEL, staffName, TONE_TEXT } from "./format";
 import { CarePlanner } from "./CarePlanner";
 import { TaskRow } from "./Tasks";
-import { Avatar, Badge, Button, LevelTile } from "./ui";
+import { AiMark, Avatar, Badge, Button, LevelTile } from "./ui";
 
 const ZONE_NAME: Record<Zone, string> = { resus: "Resus", acute: "Acute", fasttrack: "Fast track" };
 const JUMPS = [
@@ -142,6 +142,11 @@ export function PatientSheet({
           <nav aria-label="Jump to" className="scroll-x flex border-t border-line px-3">
             {JUMPS.map((j) => (
               <button key={j.id} type="button" onClick={() => jump(j.id)} className="h-10 px-2 text-[13px] font-bold whitespace-nowrap text-ink-3 hover:text-ink">
+                {j.id === "sheet-care" && (
+                  <span aria-hidden className="mr-1 text-pen">
+                    ✦
+                  </span>
+                )}
                 {j.label}
                 {j.id === "sheet-care" && <span className="ml-1.5 font-mono text-[11px] font-normal">{open} open</span>}
               </button>
@@ -161,7 +166,12 @@ export function PatientSheet({
                 </ul>
               )}
               {p.flags.length === 0 && needs && <p className="mt-1.5 text-[14px] text-ink-2">{needs[0].toUpperCase() + needs.slice(1)}.</p>}
-              {p.needs.highRisk && p.needs.reason && <p className="mt-2 text-[14px] text-ink-2">Why high risk: {p.needs.reason}</p>}
+              {p.needs.highRisk && p.needs.reason && (
+                <p className="mt-2.5 flex items-start gap-2 text-[14px] text-ink-2">
+                  <AiMark className="mt-px">AI</AiMark>
+                  <span>Why high risk: {p.needs.reason}</span>
+                </p>
+              )}
               <p className="mt-2.5 text-[12px] text-ink-3">{rule(p.level)}</p>
             </div>
           </Section>
@@ -242,7 +252,15 @@ export function PatientSheet({
             )}
           </Section>
 
-          <Section title="What the AI read" aside={p.review.length ? <Badge tone="warn">Check: {p.review.join(", ")}</Badge> : undefined}>
+          <Section
+            title="What the AI read"
+            aside={
+              <span className="flex flex-wrap items-center gap-2">
+                {p.review.length > 0 && <Badge tone="warn">Check: {p.review.join(", ")}</Badge>}
+                <AiMark />
+              </span>
+            }
+          >
             <Facts>
               <Fact label="Specialty">{SPECIALTY_LABEL[p.needs.specialty]}</Fact>
               <Fact label="Likely needs">{needs || "nothing beyond an examination"}</Fact>

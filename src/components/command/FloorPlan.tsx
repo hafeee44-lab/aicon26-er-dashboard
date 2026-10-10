@@ -127,7 +127,7 @@ export function FloorPlan({ dept, tasks, onOpen, onCallBackup }: { dept: Departm
                         <span className="text-ink-3"> · {next[0].title}</span>
                       </>
                     ) : (
-                      <span className="text-warn">{p.plan ? "No open tasks" : "No care plan yet: add the chart"}</span>
+                      <span className="text-warn">{p.plan ? "No open tasks" : "✦ No care plan yet: the AI can read the chart"}</span>
                     )}
                   </span>
                 </button>

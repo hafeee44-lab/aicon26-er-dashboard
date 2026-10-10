@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Action, ActionKind, AdviseResponse, Kpis } from "@/er/types";
 import type { Language } from "@/lib/types";
-import { Button, ModeBadge, SectionHead, Seg } from "./ui";
+import { AiMark, Button, ModeBadge, SectionHead, Seg } from "./ui";
 
 export const FIX: Record<ActionKind, string> = {
   call_doctor: "Call backup doctor",
@@ -87,7 +87,12 @@ export function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
     <section aria-label="AI brief for the charge nurse">
       <SectionHead
         index="04"
-        title="AI brief"
+        title={
+          <span className="flex items-center gap-2">
+            AI brief
+            <AiMark />
+          </span>
+        }
         aside={
           <>
             <Seg<Language>
@@ -100,6 +105,7 @@ export function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
               ]}
             />
             <Button size="sm" variant="solid" onClick={write} disabled={loading}>
+              <span aria-hidden>✦</span>
               {loading ? "Writing…" : brief ? "Rewrite" : "Write brief"}
             </Button>
           </>

@@ -149,11 +149,12 @@ Tick these off in your commits. Ask your teammate before starting a task from th
 
 - **Inspiration:** award-winning bedside monitors (Philips IntelliVue, GE CARESCAPE, Mindray) and hospital command centres. Numbers come first, and there is one level of navigation.
 - **Color only means something clinical:** triage levels (`lvl-1`…`lvl-5`), alarms (`text-alert`, `text-warn`) or vital-sign monitor colors (`text-hr` green, `text-spo2` cyan, `text-bp` red, `text-rr` yellow). Always pair a color with a text label.
+- **The AI is always labelled:** wherever the AI reads or writes (intake, care plans, the brief, predictions), show `AiMark` (✦ AI in pen blue) from `ui.tsx`, and start AI buttons with ✦. Pen blue (`text-pen`, `border-pen`) is only for the AI and for words quoted from a chart.
 - **Everything else is ink:** use the tokens in `globals.css` (`bg-bg`, `bg-panel`, `bg-raised`, `border-line`, `text-ink`, `text-ink-2`, `text-ink-3`).
 - **No gradients, drop shadows, rounded-2xl cards or icon-in-a-circle tiles.** Use hairline borders and 2px corners.
 - **Type:** Atkinson Hyperlegible Next for text, `font-mono` (Atkinson Hyperlegible Mono) for every number and code, `.hand` (Caveat) only for words quoted from a chart, and `font-urdu` for Urdu.
 - **Themes:** `data-theme="monitor"` (dark, default) and `"paper"` (light). Every new color must be a token defined for both themes.
-- **Primitives:** `Button`, `Seg`, `LevelTile`, `Glyph`, `Badge`, `SectionHead` and `Micro` in `ui.tsx`.
+- **Primitives:** `Button`, `Seg`, `LevelTile`, `Glyph`, `Badge`, `AiMark`, `Avatar`, `SectionHead` and `Micro` in `ui.tsx`.
 - **Clock:** the clock runs at one fixed speed, `MINUTES_PER_SECOND` (5) in `useCommand.ts`. There is no speed picker, so a demo always plays the same way.
 - **Waiting list order:** the board shows the engine's real pick order (`waitingQueue(d)` in `engine.ts`), numbered with NEXT first. Switching "Who goes first" reorders it at once, so the policy's effect is visible.
 

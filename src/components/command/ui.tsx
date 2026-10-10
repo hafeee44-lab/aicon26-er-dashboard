@@ -64,12 +64,21 @@ export function Badge({ children, tone = "normal" }: { children: ReactNode; tone
   return <span className={`inline-flex h-5 items-center border border-current px-1.5 font-mono text-[10px] font-bold tracking-[0.08em] uppercase ${TONE_TEXT[tone]}`}>{children}</span>;
 }
 
-export function ModeBadge({ mode, cached }: { mode: "ai" | "rules"; cached?: boolean }) {
-  if (mode === "rules") return <Badge tone="warn">Rules · AI offline</Badge>;
-  return <Badge tone="ok">{cached ? "AI · saved answer" : "AI read"}</Badge>;
+export function AiMark({ children = "AI", className = "" }: { children?: ReactNode; className?: string }) {
+  return (
+    <span className={`inline-flex h-5 flex-none items-center gap-1 border border-pen px-1.5 font-mono text-[10px] font-bold tracking-[0.08em] whitespace-nowrap text-pen uppercase ${className}`}>
+      <span aria-hidden>✦</span>
+      {children}
+    </span>
+  );
 }
 
-export function SectionHead({ index, title, aside }: { index?: string; title: string; aside?: ReactNode }) {
+export function ModeBadge({ mode, cached }: { mode: "ai" | "rules"; cached?: boolean }) {
+  if (mode === "rules") return <Badge tone="warn">Rules · AI offline</Badge>;
+  return <AiMark>{cached ? "AI · saved answer" : "AI read"}</AiMark>;
+}
+
+export function SectionHead({ index, title, aside }: { index?: string; title: ReactNode; aside?: ReactNode }) {
   return (
     <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line px-4">
       <h2 className="flex items-baseline gap-2.5 text-[13px] font-bold tracking-[0.02em]">

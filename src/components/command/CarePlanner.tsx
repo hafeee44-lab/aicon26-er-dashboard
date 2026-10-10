@@ -4,19 +4,10 @@ import { useState } from "react";
 import { INTERVAL_MINUTES } from "@/er/engine";
 import { demoCareNotes, demoCharts } from "@/er/demo-notes";
 import type { CareOrder, CareResponse, Patient } from "@/er/types";
-import { readUpload } from "@/lib/files";
+import { readUpload, toBase64 } from "@/lib/files";
 import type { Attachment } from "@/lib/types";
 import { at, FREQ_LABEL, KIND_LABEL } from "./format";
-import { Badge, Button, Glyph, Micro, ModeBadge } from "./ui";
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1]);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(blob);
-  });
-}
+import { AiMark, Badge, Button, Glyph, Micro, ModeBadge } from "./ui";
 
 function Rhythm({ order }: { order: CareOrder }) {
   const every = INTERVAL_MINUTES[order.frequency];
@@ -105,7 +96,7 @@ export function CarePlanner({
     try {
       const res = await fetch(chart.src);
       if (!res.ok) throw new Error("The sample chart could not be loaded");
-      const attachment = { mimeType: chart.mimeType, data: await blobToBase64(await res.blob()) };
+      const attachment = { mimeType: chart.mimeType, data: await toBase64(await res.blob()) };
       setFile({ attachment, label: chart.label, preview: chart.src });
       await read({ note: "", files: [attachment] });
     } catch (e) {
@@ -126,80 +117,81 @@ export function CarePlanner({
 
   if (open || !plan) {
     return (
-      <div className={loading ? "scanning" : ""}>
-        {!open && !plan ? (
-          <div className="border border-dashed border-line-strong p-4">
-            <p className="text-[14px]">No care plan yet.</p>
-            <p className="mt-1 text-[13px] text-ink-2">Photograph the treatment chart or paste the doctor&apos;s notes. The AI lists the problems and every order written there. It never adds a drug or a dose.</p>
-            <Button variant="solid" className="mt-3" onClick={() => setOpen(true)}>
-              Read chart or notes
+      <div className={`border border-pen/60 bg-raised p-4 ${loading ? "scanning" : ""}`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <AiMark>AI reads the chart</AiMark>
+          <span className="text-[12px] text-ink-3">Photo, PDF or typed orders</span>
+        </div>
+        <p className="mt-2.5 text-[16px] leading-snug font-bold">{plan ? "Read a new chart" : "No care plan yet. Let the AI read the chart."}</p>
+        <p className="mt-1 text-[13px] text-ink-2">It lists the problems and every order written there, each with the words it came from. It never adds a drug or a dose, and nothing is scheduled until a doctor confirms.</p>
+        <div className="mt-4 space-y-4">
+          <div>
+            <Micro>Sample charts · handwritten, synthetic</Micro>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {demoCharts.map((c) => (
+                <button key={c.src} type="button" disabled={loading} onClick={() => sample(c)} className="group border border-line text-left hover:border-ink-3">
+                  <img src={c.src} alt="" className="h-24 w-full object-cover object-top opacity-90 group-hover:opacity-100" />
+                  <span className="block px-2 py-1.5 text-[12px] leading-tight text-ink-2">{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Micro>Or upload a photo or PDF</Micro>
+            <label className="mt-2 flex cursor-pointer items-center gap-3 border border-line px-3 py-2.5 text-[13px] hover:border-ink-3">
+              <span className="btn btn-sm">Choose file</span>
+              <span className="truncate text-ink-2">{file?.label ?? "Treatment chart, lab report or discharge note"}</span>
+              <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => upload(e.target.files?.[0])} />
+            </label>
+          </div>
+          <div>
+            <label htmlFor={`care-note-${patient.id}`} className="micro">
+              Or type the orders
+            </label>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {demoCareNotes.map((n) => (
+                <button key={n} type="button" className="btn btn-sm" onClick={() => setNote(n)}>
+                  {n.split("\n")[0].split(".")[0].slice(0, 28)}
+                </button>
+              ))}
+            </div>
+            <textarea
+              id={`care-note-${patient.id}`}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={5}
+              placeholder={"Inj ceftriaxone 1g IV BD\nRL 1L 8 hourly\nDressing daily"}
+              className="ruled mt-2 w-full resize-y border border-line bg-raised px-3 py-1 font-mono text-[13px] leading-[28px] outline-none focus:border-ink-3"
+            />
+          </div>
+          {error && <p className="text-[13px] text-alert">{error}</p>}
+          <div className="flex gap-2">
+            <Button variant="solid" disabled={loading || (!note.trim() && !file)} onClick={() => read({ note, files: file ? [file.attachment] : [] })}>
+              <span aria-hidden>✦</span>
+              {loading ? "Reading the chart…" : "Read with AI"}
             </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <Micro>Sample charts · handwritten, synthetic</Micro>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {demoCharts.map((c) => (
-                  <button key={c.src} type="button" disabled={loading} onClick={() => sample(c)} className="group border border-line text-left hover:border-ink-3">
-                    <img src={c.src} alt="" className="h-24 w-full object-cover object-top opacity-90 group-hover:opacity-100" />
-                    <span className="block px-2 py-1.5 text-[12px] leading-tight text-ink-2">{c.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Micro>Or upload a photo or PDF</Micro>
-              <label className="mt-2 flex cursor-pointer items-center gap-3 border border-line px-3 py-2.5 text-[13px] hover:border-ink-3">
-                <span className="btn btn-sm">Choose file</span>
-                <span className="truncate text-ink-2">{file?.label ?? "Treatment chart, lab report or discharge note"}</span>
-                <input type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => upload(e.target.files?.[0])} />
-              </label>
-            </div>
-            <div>
-              <label htmlFor={`care-note-${patient.id}`} className="micro">
-                Or type the orders
-              </label>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {demoCareNotes.map((n) => (
-                  <button key={n} type="button" className="btn btn-sm" onClick={() => setNote(n)}>
-                    {n.split("\n")[0].split(".")[0].slice(0, 28)}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                id={`care-note-${patient.id}`}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={5}
-                placeholder={"Inj ceftriaxone 1g IV BD\nRL 1L 8 hourly\nDressing daily"}
-                className="ruled mt-2 w-full resize-y border border-line bg-raised px-3 py-1 font-mono text-[13px] leading-[28px] outline-none focus:border-ink-3"
-              />
-            </div>
-            {error && <p className="text-[13px] text-alert">{error}</p>}
-            <div className="flex gap-2">
-              <Button variant="solid" disabled={loading || (!note.trim() && !file)} onClick={() => read({ note, files: file ? [file.attachment] : [] })}>
-                {loading ? "Reading the chart…" : "Read with AI"}
+            {plan && (
+              <Button onClick={() => setOpen(false)} disabled={loading}>
+                Cancel
               </Button>
-              {plan && (
-                <Button onClick={() => setOpen(false)} disabled={loading}>
-                  Cancel
-                </Button>
-              )}
-              {!plan && (
-                <Button onClick={() => setOpen(false)} disabled={loading}>
-                  Close
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     );
   }
 
   return (
     <div>
+      <div className="mb-4 flex flex-wrap items-center gap-2 border border-pen/60 bg-raised px-3 py-2.5">
+        <AiMark>AI reads the chart</AiMark>
+        <span className="min-w-0 flex-1 text-[12px] text-ink-2">Every order below quotes the words on the chart it came from.</span>
+        {meta && <ModeBadge mode={meta.mode} cached={meta.cached} />}
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <span aria-hidden>✦</span>
+          Read a new chart
+        </Button>
+      </div>
       {plan.problems.length > 0 && (
         <ol className="mb-3 space-y-1">
           {plan.problems.map((pr, i) => (
@@ -233,10 +225,6 @@ export function CarePlanner({
         ) : (
           <Badge tone="ok">Live since {at(plan.confirmedAt)}</Badge>
         )}
-        <Button size="sm" onClick={() => setOpen(true)}>
-          Read a new chart
-        </Button>
-        {meta && <ModeBadge mode={meta.mode} cached={meta.cached} />}
         {plan.confirmedAt === null && <span className="text-[12px] text-ink-3">Nothing is scheduled until a doctor confirms. Times start at {at(now + 15)}.</span>}
       </div>
     </div>
