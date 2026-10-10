@@ -92,6 +92,7 @@ const ACTIVE_AFTER_ER: Stage[] = ["admitted"];
 
 const isString = (f: string | false): f is string => typeof f === "string";
 const average = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function resourceCount(resources: Resource[]) {
   return new Set(resources.map((r) => GROUP[r])).size + (resources.includes("complex_procedure") ? 1 : 0);
@@ -398,6 +399,7 @@ export function actions(d: Department): Action[] {
   const late = rounds(d).filter((t) => t.kind !== "see_doctor" && t.status === "overdue" && t.escalatedAt === null);
   const worst = late.sort((a, b) => b.lateBy - a.lateBy)[0];
   const urgentLate = late.some((t) => t.kind === "medication" || t.kind === "iv_fluids");
+  const urgentWaiting = count(k.criticalWaiting, "level 1–2 patient is waiting", "level 1–2 patients are waiting");
 
   const list: (Action | false)[] = [
     k.criticalWaiting > 0 &&
@@ -406,7 +408,7 @@ export function actions(d: Department): Action[] {
         kind: "call_doctor",
         severity: "critical",
         title: "Critical patients have no doctor",
-        detail: `${k.criticalWaiting} level 1–2 patients are waiting and every doctor is busy. Call the backup doctor now.`,
+        detail: `${urgentWaiting} and every doctor is busy. Call the backup doctor now.`,
       },
     k.criticalWaiting === 0 &&
       allBusy &&
@@ -422,7 +424,7 @@ export function actions(d: Department): Action[] {
         kind: "open_overflow",
         severity: "critical",
         title: "No acute beds for critical patients",
-        detail: `${k.corridor} patients are being treated on corridor trolleys and every acute bed is full. Open the overflow area.`,
+        detail: `${k.corridor ? count(k.corridor, "patient is being treated on a corridor trolley", "patients are being treated on corridor trolleys") : urgentWaiting} and every resus and acute bed is full. Open the overflow area.`,
       },
     worst && {
       kind: "escalate_tasks",

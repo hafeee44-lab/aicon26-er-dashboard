@@ -111,7 +111,7 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
             const late = next.filter((t) => t.status === "overdue").length;
             return (
               <li key={p.id} className="bg-bg">
-                <button type="button" onClick={() => onOpen(p.id)} aria-label={`${p.name}, level ${p.level}${late ? `, ${late} tasks late` : ""}`} className="block w-full p-4 text-left hover:bg-raised">
+                <button type="button" onClick={() => onOpen(p.id)} aria-label={`${p.name}, level ${p.level}${late ? `, ${late} task${late === 1 ? "" : "s"} late` : ""}`} className="block w-full p-4 text-left hover:bg-raised">
                   <span className="flex items-center gap-2.5">
                     <LevelTile level={p.level} size="sm" />
                     <span className="truncate font-bold">{p.name}</span>
