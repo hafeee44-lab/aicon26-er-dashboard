@@ -13,7 +13,7 @@ ER Command fixes both the same way: **the AI reads the mess, code turns it into 
 
 ## What it does
 
-1. **Intake:** a nurse types or dictates a messy note in English, Urdu or Roman Urdu. The AI turns it into clean vitals plus predicted needs and flags anything it was unsure about.
+1. **Intake:** a nurse types or dictates a messy note in English, Urdu or Roman Urdu, or attaches a photo or PDF of a handwritten note, ambulance handover or referral slip. The AI turns it into clean vitals plus predicted needs, shows what it read, and flags anything it was unsure about.
 2. **Triage and allocation:** an ESI-style checklist in code sets the urgency level (1–5); the AI can only raise priority. Code places patients in resus, acute or fast-track beds and matches doctors. Every waiting patient becomes a "see a doctor" task with a target time for their level.
 3. **Care plans:** the nurse adds notes or a **photo/PDF of the treatment chart or a report**. The AI lists the patient's problems and the orders actually written, with the exact source words. It never invents a drug or a dose. Code adds labelled monitoring suggestions, and the doctor confirms the plan.
 4. **Rounds:** code turns every order into timed tasks (BD → every 12 h, TDS → every 8 h). Nursing tasks go to the patient's nurse and reviews to their doctor. Everyone sees **Due now / Overdue**.
@@ -112,7 +112,7 @@ Code and AI split the work. The AI reads messy notes and writes the brief. Code 
 
 ## Demo safety
 
-- **Demo notes:** the 9 notes in `src/er/demo-notes.ts` have their real AI answers saved in `src/er/demo-answers.json`, which is part of the repo. They come back instantly with `cached: true`, on the laptop and on the live site, even if Gemini is down. If you change the prompt, run `node scripts/warm.ts` with the dev server running to refresh them.
+- **Demo notes:** the 9 notes in `src/er/demo-notes.ts` have their real AI answers saved in `src/er/demo-answers.json`, which is part of the repo. They come back instantly with `cached: true`, on the laptop and on the live site, even if Gemini is down. The 2 sample photos for New arrival (`public/demo/slip-*.jpg`, see [`data/intake/README.md`](data/intake/README.md)) have saved answers too. If you change the prompt, run `node scripts/warm.ts` with the dev server running to refresh them all, or `node scripts/warm.ts slips` to refresh only the sample photos.
 - **Saved answers on the laptop:** every other AI answer is saved in `.ai-cache/` on that machine, so a repeated demo replays instantly. The live site can't save files, so it asks Gemini fresh.
 - **Busy models:** on a 503 or 429 the app switches straight to `AI_FALLBACK_MODEL`, which has its own free quota. A brief server error gets one retry first.
 - **Time limit:** if the AI hasn't answered within `AI_TIME_LIMIT` seconds (25 by default), the routes fall back to rules instead of keeping the audience waiting.

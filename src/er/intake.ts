@@ -69,6 +69,10 @@ export function cleanIntake(value: unknown, note: string): Intake {
   };
 }
 
+export function cleanTranscript(value: unknown) {
+  return typeof value === "string" ? value.trim().slice(0, 1200) : "";
+}
+
 export function cleanNeeds(value: unknown): Needs {
   const raw = record(value);
   const resources = Array.isArray(raw.resources) ? raw.resources.filter((r): r is Resource => RESOURCES.includes(r as Resource)) : [];

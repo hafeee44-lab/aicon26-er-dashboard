@@ -20,3 +20,7 @@ export const demoCharts = [
   { label: "Post-op orders with a stopped drug (Asma Bibi)", src: "/demo/chart-asma.jpg", mimeType: "image/jpeg" },
 ];
 
+export const demoSlips = [
+  { label: "Ambulance handover (road accident)", src: "/demo/slip-ambulance.jpg", mimeType: "image/jpeg" },
+  { label: "Referral slip from a health unit (pregnancy)", src: "/demo/slip-referral.jpg", mimeType: "image/jpeg" },
+];

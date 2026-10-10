@@ -1,32 +1,20 @@
+import { cleanFiles } from "@/er/attachments";
 import demoCare from "@/er/demo-care.json";
 import { demoKey } from "@/er/demo-key";
 import { cleanPlan, parseOrders } from "@/er/orders";
 import { careInput, carePrompt } from "@/er/prompts";
 import type { CareRequest, CareResponse } from "@/er/types";
-import { aiConfig, generateJSON, type Attachment } from "@/lib/ai";
+import { aiConfig, generateJSON } from "@/lib/ai";
 
 export const maxDuration = 60;
 
-const MAX_FILES = 4;
-
 const saved = demoCare as Record<string, { plan: CareResponse["plan"]; model: string }>;
-const MAX_FILE_CHARS = 6_000_000;
-
-const validFile = (f: unknown): f is Attachment => {
-  const file = f as Attachment;
-  return (
-    typeof file?.mimeType === "string" &&
-    (file.mimeType.startsWith("image/") || file.mimeType === "application/pdf") &&
-    typeof file.data === "string" &&
-    file.data.length <= MAX_FILE_CHARS
-  );
-};
 
 export async function POST(req: Request) {
   const body = (await req.json()) as CareRequest;
   const started = Date.now();
   const note = typeof body?.note === "string" ? body.note.trim() : "";
-  const files = Array.isArray(body?.files) ? body.files.filter(validFile).slice(0, MAX_FILES) : [];
+  const files = cleanFiles(body?.files);
 
   if (!note && !files.length) {
     return Response.json({ error: "Send a note or attach a report" }, { status: 400 });

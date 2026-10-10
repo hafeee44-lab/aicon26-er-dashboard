@@ -289,5 +289,73 @@
    "consciousness"
   ],
   "model": "gemini-3.5-flash-lite"
+ },
+ "783d7fc5dac5861592458682a4af8bce": {
+  "intake": {
+   "name": "Waqas Butt",
+   "age": 32,
+   "sex": "male",
+   "complaint": "Road traffic accident (bike vs car) with head injury and right thigh deformity",
+   "vitals": {
+    "hr": 124,
+    "rr": 26,
+    "sbp": 92,
+    "dbp": 60,
+    "spo2": 93,
+    "temp": null,
+    "pain": 9,
+    "consciousness": "voice"
+   },
+   "note": "AMBULANCE • PATIENT HANDOVER\nUnit: A-14 Date: 10/10/26 At scene: 08:12\nNAME Waqas Butt 32 / M\nINCIDENT Bike vs car (RTA) ~40 min ago, no helmet\nCONSCIOUS GCS 13 - confused, eyes open to voice\nVITALS BP 92/60 P 124 RR 26 SpO2 93% RA\nINJURIES Deformed Rt thigh, abrasions face + both arms\nPAIN 9/10\nGIVEN IV 18G Lt hand, NS 500 ml running, O2 mask\nHanded over by Paramedic S. Khan"
+  },
+  "needs": {
+   "specialty": "surgery",
+   "resources": [
+    "labs",
+    "xray",
+    "ct",
+    "iv_fluids",
+    "iv_meds",
+    "specialist",
+    "procedure"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "Severe trauma from a road traffic accident requires urgent surgical evaluation, imaging, and resuscitation."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
+ },
+ "3ab33e3a75ef8fd303306801c332d5be": {
+  "intake": {
+   "name": "Shazia Kanwal",
+   "age": 26,
+   "sex": "female",
+   "complaint": "Severe headache, blurred vision and bilateral foot swelling at 32 weeks pregnancy",
+   "vitals": {
+    "hr": 98,
+    "rr": null,
+    "sbp": 168,
+    "dbp": 112,
+    "spo2": null,
+    "temp": 37,
+    "pain": null,
+    "consciousness": null
+   },
+   "note": "To: MO Emergency, DHQ Hospital\nPt: Shazia Kanwal 26 F\nG2 P1, 32 wks pregnant\nSevere headache + blurred vision since morning\nSwelling both feet\nBP 168/112 P 98 T 98.6 F\nUrine albumin ++\n? Severe pre-eclampsia. MgSO4 not available here.\nKindly see urgently."
+  },
+  "needs": {
+   "specialty": "obgyn",
+   "resources": [
+    "labs",
+    "iv_meds",
+    "specialist"
+   ],
+   "destination": "ward",
+   "highRisk": true,
+   "reason": "Severe pre-eclampsia at 32 weeks requires urgent OBGYN review, lab work, and IV magnesium sulfate treatment."
+  },
+  "review": [],
+  "model": "gemini-3.5-flash-lite"
  }
 }

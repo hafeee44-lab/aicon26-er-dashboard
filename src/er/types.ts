@@ -183,7 +183,7 @@ export type SurgeCase = { intake: Intake; needs: Needs; source?: CaseSource };
 
 export type Arrival = SurgeCase & { at: number };
 
-export type IntakeRequest = { note: string };
+export type IntakeRequest = { note: string; files?: Attachment[] };
 export type IntakeResponse = { intake: Intake; needs: Needs; review: string[]; meta: StepMeta };
 
 export type CareRequest = {
