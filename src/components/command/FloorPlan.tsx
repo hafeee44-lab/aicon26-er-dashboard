@@ -1,8 +1,9 @@
-import { isBusy, LEVELS, ZONES } from "@/er/engine";
+import { LEVELS, ZONES } from "@/er/engine";
 import type { Bed, Department, Patient, TaskView, Zone } from "@/er/types";
-import { ageSex, doorStatus, onCorridor, shortStaff, TONE_TEXT } from "./format";
-import { LevelTile, Micro, SectionHead } from "./ui";
+import { ageSex, doorStatus, onCorridor, TONE_TEXT } from "./format";
 import { taskCode } from "./Tasks";
+import { CareTeam } from "./Team";
+import { LevelTile, SectionHead } from "./ui";
 
 const ZONE_NAME: Record<Zone, string> = { resus: "Resus", acute: "Acute", fasttrack: "Fast track" };
 const ZONE_COLS: Record<Zone, string> = { resus: "grid-cols-1 sm:grid-cols-2", acute: "grid-cols-2 sm:grid-cols-4", fasttrack: "grid-cols-2 sm:grid-cols-3" };
@@ -44,7 +45,7 @@ function Trolley({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id: str
   );
 }
 
-export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: TaskView[]; onOpen: (id: string) => void }) {
+export function FloorPlan({ dept, tasks, onOpen, onCallBackup }: { dept: Department; tasks: TaskView[]; onOpen: (id: string) => void; onCallBackup: () => void }) {
   const corridor = dept.patients.filter(onCorridor);
   const waiting = dept.patients.filter((p) => p.stage === "waiting");
   const ward = dept.patients.filter((p) => p.stage === "admitted" || p.stage === "awaiting_bed");
@@ -111,7 +112,7 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
             const late = next.filter((t) => t.status === "overdue").length;
             return (
               <li key={p.id} className="bg-bg">
-                <button type="button" onClick={() => onOpen(p.id)} aria-label={`${p.name}, level ${p.level}${late ? `, ${late} tasks late` : ""}`} className="block w-full p-4 text-left hover:bg-raised">
+                <button type="button" onClick={() => onOpen(p.id)} aria-label={`${p.name}, level ${p.level}${late ? `, ${late} task${late === 1 ? "" : "s"} late` : ""}`} className="block w-full p-4 text-left hover:bg-raised">
                   <span className="flex items-center gap-2.5">
                     <LevelTile level={p.level} size="sm" />
                     <span className="truncate font-bold">{p.name}</span>
@@ -136,45 +137,9 @@ export function FloorPlan({ dept, tasks, onOpen }: { dept: Department; tasks: Ta
         </ul>
       </section>
 
-      <section aria-label="Staff" className="bg-bg">
-        <SectionHead index="03" title="Staff on shift" />
-        <div className="grid gap-px bg-line md:grid-cols-2">
-          <ul className="bg-bg">
-            {dept.doctors.map((doc) => {
-              const p = dept.patients.find((x) => x.doctorId === doc.id && x.stage === "with_doctor");
-              return (
-                <li key={doc.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line px-4 py-2">
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-bold">{doc.name}</span>
-                    <span className="text-[11px] text-ink-3 capitalize">{doc.specialty}</span>
-                  </span>
-                  <span className={`font-mono text-[11px] font-bold ${!doc.onShift ? "text-ink-3" : isBusy(dept, doc) ? "text-warn" : "text-ok"}`}>
-                    {!doc.onShift ? "BACKUP · OFF" : p ? `WITH ${p.name.split(" ")[0].toUpperCase()}` : "FREE"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          <ul className="bg-bg">
-            {dept.nurses.map((n) => {
-              const mine = tasks.filter((t) => t.ownerId === n.id && t.status !== "done");
-              const late = mine.filter((t) => t.status === "overdue").length;
-              const patients = dept.patients.filter((p) => p.nurseId === n.id && (p.stage === "admitted" || !["discharged", "left", "redirected", "transferred"].includes(p.stage))).length;
-              return (
-                <li key={n.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line px-4 py-2">
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-bold">{n.name}</span>
-                    <span className="text-[11px] text-ink-3">{patients} patients · {mine.length} open tasks</span>
-                  </span>
-                  <span className={`font-mono text-[11px] font-bold ${late ? "text-alert" : "text-ink-3"}`}>{late ? `${late} LATE` : shortStaff(n.name)}</span>
-                </li>
-              );
-            })}
-            <li className="px-4 py-3">
-              <Micro>Nurse tasks: medicines, drips, dressings, observations, tests · Doctor tasks: reviews</Micro>
-            </li>
-          </ul>
-        </div>
+      <section aria-label="Care team" className="bg-bg">
+        <SectionHead index="03" title="Care team · who is with whom" aside={<span className="font-mono text-[11px] text-ink-3">select a patient to open them</span>} />
+        <CareTeam dept={dept} tasks={tasks} onOpen={onOpen} onCallBackup={onCallBackup} />
       </section>
     </div>
   );

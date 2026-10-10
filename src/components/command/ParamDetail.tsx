@@ -1,9 +1,10 @@
-import { GRACE_MINUTES, isBusy, LEVELS, TARGET_MINUTES, ZONES } from "@/er/engine";
+import { GRACE_MINUTES, LEVELS, TARGET_MINUTES, ZONES } from "@/er/engine";
 import type { ReactNode } from "react";
 import type { Action, ActionKind, Department, Kpis, Patient, TaskView, Zone } from "@/er/types";
 import { ageSex, doorStatus, dur, onCorridor, shortStaff, TONE_TEXT } from "./format";
 import type { ParamKey } from "./Params";
 import { TaskRow } from "./Tasks";
+import { DoctorGrid } from "./Team";
 import { Button, LevelTile, Micro } from "./ui";
 
 const TITLE: Record<ParamKey, string> = {
@@ -163,24 +164,7 @@ function Body({ kind, d, k, tasks, onOpen, onDone }: { kind: ParamKey; d: Depart
   const boarding = d.patients.filter((p) => p.stage === "awaiting_bed");
   return (
     <>
-      <ul className="grid gap-px bg-line sm:grid-cols-2 xl:grid-cols-3">
-        {d.doctors.map((doc) => {
-          const p = d.patients.find((x) => x.doctorId === doc.id && x.stage === "with_doctor");
-          return (
-            <li key={doc.id} className="bg-bg">
-              <button type="button" disabled={!p} onClick={() => p && onOpen(p.id)} className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left enabled:hover:bg-raised">
-                <span className="min-w-0">
-                  <span className="block truncate text-[13px] font-bold">{doc.name}</span>
-                  <span className="text-[11px] text-ink-3 capitalize">{doc.specialty}</span>
-                </span>
-                <span className={`text-right font-mono text-[11px] font-bold ${!doc.onShift ? "text-ink-3" : isBusy(d, doc) ? "text-warn" : "text-ok"}`}>
-                  {!doc.onShift ? "OFF · BACKUP" : p ? `WITH ${p.name.toUpperCase()} · ${dur(d.now - (p.seenAt ?? d.now))}` : "FREE"}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <DoctorGrid dept={d} tasks={tasks} onOpen={onOpen} />
       <div className="flex h-9 items-center border-t border-line px-4">
         <Micro>Boarding · admitted, waiting for a ward bed · {boarding.length}</Micro>
       </div>

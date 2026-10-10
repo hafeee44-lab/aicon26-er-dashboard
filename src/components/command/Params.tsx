@@ -33,7 +33,7 @@ function build(d: Department, k: Kpis): Param[] {
       sub: k.tasksDue ? `${k.tasksDue} due now` : "nothing due now",
       state: k.tasksOnTime !== null && k.tasksOnTime < 90 ? "warn" : "ok",
     },
-    { key: "beds", label: "Beds free", value: String(free), unit: `/${total}`, sub: k.corridor ? `${k.corridor} on corridor trolleys` : "nobody on the corridor", state: k.corridor ? "warn" : free === 0 ? "alarm" : "ok" },
+    { key: "beds", label: "Beds free", value: String(free), unit: `/${total}`, sub: k.corridor ? (k.corridor === 1 ? "1 on a corridor trolley" : `${k.corridor} on corridor trolleys`) : "nobody on the corridor", state: k.corridor ? "warn" : free === 0 ? "alarm" : "ok" },
     {
       key: "doctors",
       label: "Doctors busy",

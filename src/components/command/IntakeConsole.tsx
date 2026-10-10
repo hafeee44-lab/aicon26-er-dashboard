@@ -234,7 +234,7 @@ export function IntakeConsole({ onClose, onAdmit }: { onClose: () => void; onAdm
                   <div className="text-[22px] leading-tight font-bold">Level {result.level}</div>
                   <div className="font-mono text-[12px] text-ink-2">See a doctor {TARGET_MINUTES[result.level] === 0 ? "now" : `within ${dur(TARGET_MINUTES[result.level])}`}</div>
                   <ul className="mt-2 space-y-1 text-[13px]">
-                    {(result.flags.length ? result.flags : [`No danger signs · ${needs.resources.length} likely needs`]).map((f) => (
+                    {(result.flags.length ? result.flags : [`No danger signs · ${needs.resources.length} likely need${needs.resources.length === 1 ? "" : "s"}`]).map((f) => (
                       <li key={f}>· {f}</li>
                     ))}
                   </ul>
