@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Action, ActionKind, AdviseResponse, Kpis } from "@/er/types";
 import type { Language } from "@/lib/types";
-import { Button, Icon, ModeBadge, Seg } from "./ui";
+import { Button, ModeBadge, SectionHead, Seg } from "./ui";
 
 const FIX: Record<ActionKind, string> = {
   call_doctor: "Call backup doctor",
@@ -11,35 +11,112 @@ const FIX: Record<ActionKind, string> = {
   free_beds: "Ask for discharges",
   redirect_minor: "Send to clinic",
   transfer: "Start transfers",
-  escalate_tasks: "Escalate overdue care",
+  escalate_tasks: "Escalate now",
 };
 
-function Alarm({ action, onApply, primary = false }: { action: Action; onApply: (kind: ActionKind) => void; primary?: boolean }) {
-  return <li className={primary ? "primary-alarm" : "secondary-alarm"}><span className="alarm-symbol"><Icon name="alert" size={24} /></span><div className="alarm-copy"><p className="alarm-label">{primary ? "Needs action now" : "Also needs attention"}</p><h3>{action.title}</h3><p>{action.detail}</p></div><Button variant={primary ? "alert" : "line"} size="lg" onClick={() => onApply(action.kind)} aria-label={FIX[action.kind]}>{FIX[action.kind]}<Icon name="arrow" size={18} /></Button></li>;
+function Alarm({ action, onApply }: { action: Action; onApply: (kind: ActionKind) => void }) {
+  const high = action.severity === "critical";
+  return (
+    <li className="grid grid-cols-[52px_minmax(0,1fr)] border-b border-line">
+      <div className={`flex items-start justify-center pt-3.5 font-mono text-[10px] font-extrabold tracking-[0.1em] ${high ? "bg-alert text-white" : "bg-warn text-black"}`}>
+        {high ? "HIGH" : "MED"}
+      </div>
+      <div className="px-4 py-3">
+        <div className="font-bold">{action.title}</div>
+        <p className="mt-1 text-[13px] leading-snug text-ink-2">{action.detail}</p>
+        <Button size="sm" variant={high ? "alert" : "line"} className="mt-2.5" onClick={() => onApply(action.kind)}>
+          {FIX[action.kind]}
+        </Button>
+      </div>
+    </li>
+  );
 }
 
-export function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
+function Brief({ kpis, actions }: { kpis: Kpis; actions: Action[] }) {
   const [language, setLanguage] = useState<Language>("en");
   const [brief, setBrief] = useState<(AdviseResponse & { key: string; language: Language }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [expanded, setExpanded] = useState(false);
-  const details = useRef<HTMLDetailsElement>(null);
   const key = actions.map((a) => a.kind).join(",");
+
   async function write() {
-    if (details.current) details.current.open = true;
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/advise", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kpis, actions, language }) });
       if (!res.ok) throw new Error("The brief could not be written");
       setBrief({ ...((await res.json()) as AdviseResponse), key, language });
-    } catch (e) { setError((e as Error).message); } finally { setLoading(false); }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }
-  return <section className="command-card brief-card"><div className="brief-header"><div><Icon name="spark" /><h2>Your shift, summarised.</h2><p>A clear handover in English or Urdu.</p></div><Button onClick={write} disabled={loading}>{loading ? "Writing…" : "Write brief"}<Icon name="arrow" size={16} /></Button></div><details ref={details} className="calm-details"><summary>Language & handover</summary><div className="brief-body"><Seg<Language> label="Brief language" value={language} onChange={setLanguage} options={[{ value: "en", label: "English" }, { value: "ur", label: "اردو" }]} /><div aria-live="polite" className={loading ? "brief-output scanning" : "brief-output"}>{loading && <div className="skeleton-lines" aria-label="Writing handover"><i /><i /><i /></div>}{error && <p className="text-alert">{error}. Try Write brief again.</p>}{!brief && !error && !loading && <p>A short handover based on the current queue and alarms.</p>}{brief && <><div dir={brief.language === "ur" ? "rtl" : "ltr"} className={`brief-copy ${brief.language === "ur" ? "font-urdu" : ""} ${expanded ? "" : "brief-clamped"}`}>{brief.message.split("\n").filter(Boolean).map((line, i) => <p key={`${brief.key}-${i}`}>{line}</p>)}</div><button type="button" className="text-action" onClick={() => setExpanded(!expanded)} aria-expanded={expanded}>{expanded ? "Show less" : "Expand brief"}</button><div className="brief-meta"><ModeBadge mode={brief.meta.mode} cached={brief.meta.cached} />{brief.key !== key && <span>The alarms changed. Write an updated brief.</span>}</div></>}</div></div></details></section>;
+
+  return (
+    <div className="border-t border-line">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+        <span className="micro">AI brief for the charge nurse</span>
+        <div className="flex items-center gap-2">
+          <Seg<Language>
+            label="Brief language"
+            value={language}
+            onChange={setLanguage}
+            options={[
+              { value: "en", label: "EN" },
+              { value: "ur", label: "اردو" },
+            ]}
+          />
+          <Button size="sm" variant="solid" onClick={write} disabled={loading}>
+            {loading ? "Writing…" : brief ? "Rewrite" : "Write brief"}
+          </Button>
+        </div>
+      </div>
+      <div aria-live="polite" className={`min-h-[92px] px-4 pb-4 ${loading ? "scanning" : ""}`}>
+        {error && <p className="text-[13px] text-alert">{error}</p>}
+        {!brief && !error && !loading && (
+          <p className="text-[13px] text-ink-3">The AI turns the alarms and live numbers into a short handover the charge nurse can read aloud. It never gives advice about individual patients.</p>
+        )}
+        {brief && (
+          <>
+            <div dir={brief.language === "ur" ? "rtl" : "ltr"} className={brief.language === "ur" ? "font-urdu text-[17px] leading-[2.1]" : "text-[14px] leading-relaxed"}>
+              {brief.message.split("\n").filter(Boolean).map((line, i) => (
+                <p key={`${brief.key}-${i}`} className="type-in" style={{ animationDelay: `${i * 140}ms` }}>
+                  {line}
+                </p>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <ModeBadge mode={brief.meta.mode} cached={brief.meta.cached} />
+              {brief.key !== key && <span className="text-[12px] text-warn">The alarms changed since this brief</span>}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function Alarms({ actions, kpis, onApply }: { actions: Action[]; kpis: Kpis; onApply: (kind: ActionKind) => void }) {
-  const sorted = [...actions].sort((a, b) => a.severity === b.severity ? 0 : a.severity === "critical" ? -1 : 1);
-  return <section aria-label="Needs action now" className={`attention-card ${sorted.length ? "has-problem" : ""}`}><ul aria-live="polite">{sorted[0] ? <Alarm action={sorted[0]} onApply={onApply} primary /> : <li className="all-clear"><Icon name="check" /><div><strong>Everything is on track.</strong><p>No active alarms. {kpis.waiting} patients waiting to be seen.</p></div></li>}</ul>{sorted.length > 1 && <details className="calm-details additional-alarms"><summary>{sorted.length - 1} more {sorted.length === 2 ? "action" : "actions"} to review</summary><ul>{sorted.slice(1).map((a) => <Alarm key={`${a.kind}-${a.title}`} action={a} onApply={onApply} />)}</ul></details>}</section>;
+  const sorted = [...actions].sort((a, b) => (a.severity === b.severity ? 0 : a.severity === "critical" ? -1 : 1));
+
+  return (
+    <section aria-labelledby="alarms-title" className="flex flex-col">
+      <SectionHead index="02" title="Alarms" aside={<span className={`font-mono text-[11px] ${sorted.length ? "text-alert" : "text-ok"}`}>{sorted.length ? `${sorted.length} active` : "All clear"}</span>} />
+      <span id="alarms-title" className="sr-only">
+        Alarms and fixes
+      </span>
+      <ul aria-live="polite">
+        {sorted.length === 0 ? (
+          <li className="flex items-center gap-3 border-b border-line px-4 py-4 text-[13px] text-ink-2">
+            <span className="size-2 rounded-full bg-ok" aria-hidden />
+            No alarms. Every patient and task is on time.
+          </li>
+        ) : (
+          sorted.map((a) => <Alarm key={`${a.kind}-${a.title}`} action={a} onApply={onApply} />)
+        )}
+      </ul>
+      <Brief kpis={kpis} actions={actions} />
+    </section>
+  );
 }
