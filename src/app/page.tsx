@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Alarms } from "@/components/command/Alarms";
 import { DoorBoard } from "@/components/command/DoorBoard";
 import { EvidenceView } from "@/components/command/EvidenceView";
@@ -16,6 +16,25 @@ import { useCommand } from "@/components/command/useCommand";
 import type { TaskView } from "@/er/types";
 
 const TYPING = new Set(["INPUT", "TEXTAREA", "SELECT"]);
+
+function helpSubscription(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("erc-help-dismissed", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("erc-help-dismissed", callback);
+  };
+}
+
+function helpDismissed() {
+  try { return localStorage.getItem("erc-help-dismissed") === "yes"; } catch { return false; }
+}
+
+function FirstRunHelp() {
+  const dismissed = useSyncExternalStore(helpSubscription, helpDismissed, () => false);
+  if (dismissed) return null;
+  return <aside className="first-run-strip" aria-label="How ER Command works"><p><span><b>1</b> New arrival → AI reads the note</span><span><b>2</b> Code sets the level</span><span><b>3</b> Watch the queue and alarms</span></p><button type="button" aria-label="Dismiss getting started help" onClick={() => { try { localStorage.setItem("erc-help-dismissed", "yes"); } catch {} window.dispatchEvent(new Event("erc-help-dismissed")); }}>Got it</button></aside>;
+}
 
 export default function Home() {
   const cmd = useCommand();
@@ -54,48 +73,53 @@ export default function Home() {
   const wardLate = ward.filter((t) => t.status === "overdue").length;
 
   return (
-    <div className="min-h-screen pb-16 lg:pb-0">
+    <div className="presentation-root min-h-screen pb-16 lg:pb-0">
       <TopBar cmd={cmd} view={view} onView={setView} onNew={() => setIntakeOpen(true)} />
 
       {view === "command" && (
-        <main>
+        <main className="command-content">
+          <div className="command-intro"><div><p className="micro">Your shift, in focus</p><h1>Who needs attention?</h1></div><p>Start with the queue. Act on the alarm.</p></div>
+          <FirstRunHelp />
           <Params dept={cmd.dept} kpis={cmd.kpis} />
-          <div className="grid xl:grid-cols-[minmax(0,1fr)_420px]">
-            <div className="min-w-0 border-line xl:border-r">
-              <div className="flex min-h-[300px] flex-col xl:max-h-[62vh]">
+          <div className="command-primary-grid">
+            <div className="min-w-0">
+              <div className="flex min-h-[300px] flex-col">
                 <DoorBoard dept={cmd.dept} onOpen={setOpenId} />
               </div>
-              <section aria-label="Ward tasks" className="border-t border-line">
+            </div>
+            <aside className="min-w-0">
+              <Alarms actions={cmd.actions} kpis={cmd.kpis} onApply={cmd.apply} />
+            </aside>
+          </div>
+          <div className="command-secondary-grid">
+              <section aria-label="Ward tasks" className="command-card">
+              <details className="ward-disclosure">
+              <summary><span>On the ward</span><span>{wardLate ? `${wardLate} overdue` : "All on time"} · {ward.length} tasks <span aria-hidden>⌄</span></span></summary>
                 <SectionHead
-                  index="03"
-                  title="On the ward"
+                  title="Care due in the next two hours"
                   aside={
                     <>
-                      <span className={`font-mono text-[11px] ${wardLate ? "text-alert" : "text-ink-3"}`}>{wardLate ? `${wardLate} late` : "on time"}</span>
                       <Button size="sm" onClick={() => setView("rounds")}>
-                        Rounds
+                        View rounds
                       </Button>
                     </>
                   }
                 />
                 {ward.length ? (
                   <ul>
-                    {ward.slice(0, 8).map((t) => (
+                    {ward.slice(0, 3).map((t) => (
                       <TaskRow key={t.id} t={t} now={cmd.dept.now} onDone={done} onOpen={setOpenId} />
                     ))}
                   </ul>
                 ) : (
                   <p className="px-4 py-6 text-[13px] text-ink-3">No ward tasks are due in the next two hours.</p>
                 )}
+              </details>
               </section>
-            </div>
-            <aside className="border-t border-line xl:border-t-0">
-              <Alarms actions={cmd.actions} kpis={cmd.kpis} onApply={cmd.apply} />
-              <section aria-label="Shift log" className="border-t border-line">
-                <SectionHead index="04" title="Shift log" />
+              <section aria-label="Shift log" className="command-card">
+                <SectionHead title="Shift log" />
                 <ShiftLog log={cmd.log} />
               </section>
-            </aside>
           </div>
         </main>
       )}

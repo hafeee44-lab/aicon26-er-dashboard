@@ -1,105 +1,32 @@
 import { TARGET_MINUTES } from "@/er/engine";
 import type { Department, Patient } from "@/er/types";
-import { ageSex, at, bedLabel, doorStatus, onCorridor, shortStaff, staffName, TONE_TEXT } from "./format";
+import { ageSex, bedLabel, dur, onCorridor, shortStaff, staffName, STAGE_LABEL } from "./format";
 import { LevelTile, SectionHead } from "./ui";
 
-const COLS = "grid-cols-[30px_minmax(0,1fr)_auto] md:grid-cols-[30px_minmax(150px,1.1fr)_minmax(0,1.6fr)_56px_56px_132px_52px_96px]";
-
 function Row({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id: string) => void }) {
-  const status = doorStatus(d, p);
-  const bed = bedLabel(d, p);
-  const isNew = d.now - p.arrivedAt <= 0;
-
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={() => onOpen(p.id)}
-        aria-label={`${p.name || "Unnamed patient"}, level ${p.level}, ${p.complaint}, ${status.code.toLowerCase()}${bed ? `, bed ${bed}` : ""}`}
-        className={`grid w-full ${COLS} items-center gap-x-3 border-b border-line px-4 py-2.5 text-left transition-colors hover:bg-raised ${isNew ? "arrive" : ""}`}
-      >
-        <LevelTile level={p.level} />
-        <span className="min-w-0">
-          <span className="flex items-center gap-2">
-            <span className="truncate font-bold">{p.name || "Unnamed patient"}</span>
-            {p.source && <span className="micro border border-line px-1 text-[9px]!">Real</span>}
-          </span>
-          <span className="block truncate text-[12px] text-ink-3 md:hidden">{p.complaint}</span>
-          <span className="block font-mono text-[11px] text-ink-3">{ageSex(p)}</span>
-        </span>
-        <span className="hidden min-w-0 md:block">
-          <span className="block truncate text-[14px] text-ink-2">{p.complaint}</span>
-          {p.flags[0] && <span className="block truncate text-[12px] text-ink-3">{p.flags[0]}</span>}
-        </span>
-        <span className="hidden font-mono text-[13px] text-ink-2 tnum md:block">{at(p.arrivedAt)}</span>
-        {p.seenAt === null ? (
-          <span className="hidden font-mono text-[13px] text-ink-2 tnum md:block">{at(p.arrivedAt + TARGET_MINUTES[p.level])}</span>
-        ) : (
-          <span className={`hidden font-mono text-[11px] tnum md:block ${p.seenAt > p.arrivedAt + TARGET_MINUTES[p.level] ? "text-alert" : "text-ink-3"}`} title={`Seen at ${at(p.seenAt)}`}>
-            seen
-            <br />
-            {at(p.seenAt)}
-          </span>
-        )}
-        <span className={`text-right font-mono text-[12px] font-bold tracking-[0.04em] md:text-left ${TONE_TEXT[status.tone]}`}>
-          {status.code}
-          {onCorridor(p) && <span className="block text-[10px] text-warn">CORRIDOR</span>}
-        </span>
-        <span className="hidden font-mono text-[13px] md:block">{bed ?? <span className="text-ink-3">—</span>}</span>
-        <span className="hidden truncate text-[13px] text-ink-2 md:block">{shortStaff(staffName(d, p.doctorId))}</span>
-      </button>
-    </li>
-  );
+  const remaining = p.arrivedAt + TARGET_MINUTES[p.level] - d.now;
+  const waiting = p.stage === "waiting";
+  const time = waiting ? remaining < 0 ? `${dur(-remaining)} overdue` : remaining === 0 ? "Due now" : `${dur(remaining)} left` : `Seen after ${dur((p.seenAt ?? d.now) - p.arrivedAt)}`;
+  return <li><button type="button" onClick={() => onOpen(p.id)} className="queue-patient" aria-label={`${p.name || "Unnamed patient"}, level ${p.level}, ${p.complaint}, ${STAGE_LABEL[p.stage]}, ${time}. Open patient details.`}>
+    <LevelTile level={p.level} />
+    <span className="queue-name"><strong>{p.name || "Unnamed patient"}</strong><small>{ageSex(p)}</small><span className="mobile-complaint">{p.complaint}</span></span>
+    <span className="queue-complaint">{p.complaint}</span>
+    <span className="queue-status">{STAGE_LABEL[p.stage]}{onCorridor(p) && <small>No bed</small>}</span>
+    <span className={`queue-time font-mono tnum ${waiting && remaining <= 0 ? "text-alert" : ""}`}>{time}</span>
+    <span className="queue-location">{staffName(d, p.doctorId) ? shortStaff(staffName(d, p.doctorId)) : "Doctor not yet assigned"} · {bedLabel(d, p) ? `Bed ${bedLabel(d, p)}` : onCorridor(p) ? "Corridor (no bed)" : "Bed not yet assigned"}<span>Open details →</span></span>
+  </button></li>;
 }
 
-function Group({ title, patients, d, onOpen }: { title: string; patients: Patient[]; d: Department; onOpen: (id: string) => void }) {
+function Group({ title, patients, d, onOpen, collapsed = false }: { title: string; patients: Patient[]; d: Department; onOpen: (id: string) => void; collapsed?: boolean }) {
   if (!patients.length) return null;
-  return (
-    <>
-      <li className="sticky top-0 z-10 flex h-8 items-center justify-between border-b border-line bg-panel px-4">
-        <span className="micro">{title}</span>
-        <span className="font-mono text-[11px] text-ink-3">{patients.length}</span>
-      </li>
-      {patients.map((p) => (
-        <Row key={p.id} d={d} p={p} onOpen={onOpen} />
-      ))}
-    </>
-  );
+  const heading = <span className="queue-group-title">{title}<span className="font-mono tnum">{patients.length}</span></span>;
+  if (collapsed) return <li className="queue-group"><details className="queue-more"><summary>{heading}<span>View patients</span></summary><ul>{patients.map((p) => <Row key={p.id} d={d} p={p} onOpen={onOpen} />)}</ul></details></li>;
+  return <li className="queue-group"><div className="queue-group-heading">{heading}</div><ul>{patients.slice(0, 3).map((p) => <Row key={p.id} d={d} p={p} onOpen={onOpen} />)}{patients.length > 3 && <li><details className="queue-more"><summary>Show {patients.length - 3} more waiting patients <span>⌄</span></summary><ul>{patients.slice(3).map((p) => <Row key={p.id} d={d} p={p} onOpen={onOpen} />)}</ul></details></li>}</ul></li>;
 }
 
 export function DoorBoard({ dept, onOpen }: { dept: Department; onOpen: (id: string) => void }) {
   const due = (p: Patient) => p.arrivedAt + TARGET_MINUTES[p.level];
   const waiting = dept.patients.filter((p) => p.stage === "waiting").sort((a, b) => due(a) - due(b) || a.level - b.level);
-  const treating = dept.patients.filter((p) => p.stage === "with_doctor" || p.stage === "awaiting_results").sort((a, b) => a.level - b.level || a.arrivedAt - b.arrivedAt);
-  const boarding = dept.patients.filter((p) => p.stage === "awaiting_bed").sort((a, b) => a.arrivedAt - b.arrivedAt);
-  const total = waiting.length + treating.length + boarding.length;
-
-  return (
-    <section aria-labelledby="door-title" className="flex min-h-0 flex-col">
-      <SectionHead
-        index="01"
-        title="At the door"
-        aside={<span className="hidden font-mono text-[11px] text-ink-3 sm:inline">due = arrival + target for the level</span>}
-      />
-      <span id="door-title" className="sr-only">
-        Patients in the emergency department
-      </span>
-      <div className={`hidden ${COLS} gap-x-3 border-b border-line px-4 py-2 md:grid`}>
-        {["Lvl", "Patient", "Complaint · why this level", "In", "Due", "Status", "Bed", "Doctor"].map((h) => (
-          <span key={h} className="micro">
-            {h}
-          </span>
-        ))}
-      </div>
-      {total === 0 ? (
-        <p className="px-4 py-10 text-center text-ink-3">Nobody is waiting. Inject a surge or add a new arrival.</p>
-      ) : (
-        <ul className="thin-scroll relative min-h-0 flex-1 overflow-y-auto">
-          <Group title="Waiting for a doctor" patients={waiting} d={dept} onOpen={onOpen} />
-          <Group title="In treatment" patients={treating} d={dept} onOpen={onOpen} />
-          <Group title="Admitted · waiting for a ward bed" patients={boarding} d={dept} onOpen={onOpen} />
-        </ul>
-      )}
-    </section>
-  );
+  const treating = dept.patients.filter((p) => p.stage === "with_doctor" || p.stage === "awaiting_results" || p.stage === "awaiting_bed").sort((a, b) => a.level - b.level || a.arrivedAt - b.arrivedAt);
+  return <section aria-label="Patient queue" className="command-card queue-card"><SectionHead title="Patient queue" aside={<span className="queue-hint">Select a patient for the full picture</span>} /><div className="queue-scroll thin-scroll"><div className="queue-columns" aria-hidden>{["Level", "Patient", "Complaint", "Status", "Time left / overdue"].map((label) => <span key={label}>{label}</span>)}</div><ul><Group title="Waiting at the door" patients={waiting} d={dept} onOpen={onOpen} />{!waiting.length && <li className="friendly-empty"><strong>No one waiting</strong><p>New arrivals will appear here. Treatment continues below.</p></li>}<Group title="In treatment" patients={treating} d={dept} onOpen={onOpen} collapsed /></ul></div><p className="queue-footnote">Time left follows the target for each patient’s level.</p></section>;
 }

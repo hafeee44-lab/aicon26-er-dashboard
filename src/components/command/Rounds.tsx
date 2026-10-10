@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { GRACE_MINUTES } from "@/er/engine";
 import type { Department, TaskView } from "@/er/types";
-import { at, dur, FREQ_LABEL, KIND_LABEL, shortStaff, STATUS_TONE, TONE_TEXT } from "./format";
+import { at, dur, FREQ_LABEL, KIND_LABEL, shortStaff } from "./format";
 import { Button, Glyph, Micro, SectionHead } from "./ui";
 import { TaskRow, taskCode } from "./Tasks";
 
@@ -126,7 +126,7 @@ function Detail({ t, now, onDone, onOpen }: { t: TaskView; now: number; onDone: 
         <dt className="text-ink-3">Due</dt>
         <dd className="font-mono tnum">{at(t.dueAt)}</dd>
         <dt className="text-ink-3">Status</dt>
-        <dd className={`font-mono font-bold ${TONE_TEXT[STATUS_TONE[t.status]]}`}>{taskCode(t, now)}</dd>
+        <dd className={`font-mono font-bold ${t.status === "overdue" ? "text-alert" : "text-ink-2"}`}>{taskCode(t, now)}</dd>
         <dt className="text-ink-3">Owner</dt>
         <dd>{t.ownerName}</dd>
       </dl>
@@ -135,7 +135,7 @@ function Detail({ t, now, onDone, onOpen }: { t: TaskView; now: number; onDone: 
         {fromNotes ? <p className="hand mt-1 text-[22px] leading-tight">{t.source.replace("From the notes: ", "")}</p> : <p className="mt-1 text-[13px] text-ink-2">{t.source}</p>}
       </div>
       {t.kind !== "see_doctor" && t.status !== "done" && (
-        <Button variant="solid" className="mt-4 w-full" onClick={() => onDone(t)}>
+        <Button variant="solid" size="lg" className="mt-4 w-full" onClick={() => onDone(t)}>
           Mark done at {at(now)}
         </Button>
       )}
@@ -143,42 +143,43 @@ function Detail({ t, now, onDone, onOpen }: { t: TaskView; now: number; onDone: 
   );
 }
 
+function TaskGroups({ tasks, now, onDone, onOpen }: { tasks: TaskView[]; now: number; onDone: (t: TaskView) => void; onOpen: (id: string) => void }) {
+  const groups = new Map<string, TaskView[]>();
+  for (const task of tasks) {
+    const key = JSON.stringify([task.kind, task.kind === "see_doctor" ? "" : task.title, task.dueAt, task.ownerId ?? task.ownerName, task.status]);
+    const group = groups.get(key);
+    if (group) group.push(task);
+    else groups.set(key, [task]);
+  }
+  return <ul className="rounds-task-list">{[...groups.values()].map((group) => group.length === 1 ? <TaskRow key={group[0].id} t={group[0]} now={now} onDone={onDone} onOpen={onOpen} /> : <li key={group[0].id}><details className="task-group calm-details"><summary><span><strong>{group.length} {group[0].kind === "see_doctor" ? "first assessments" : group[0].title}</strong><small><span className="font-mono tnum">{at(group[0].dueAt)}</span> · {group[0].ownerId ? shortStaff(group[0].ownerName) : group[0].ownerName}</small></span><span className={`font-mono tnum ${group[0].status === "overdue" ? "text-alert" : ""}`}>{taskCode(group[0], now)} <span aria-hidden>⌄</span></span></summary><ul>{group.map((task) => <TaskRow key={task.id} t={task} now={now} onDone={onDone} onOpen={onOpen} />)}</ul></details></li>)}</ul>;
+}
+
 export function Rounds({ dept, tasks, onDone, onOpen }: { dept: Department; tasks: TaskView[]; onDone: (t: TaskView) => void; onOpen: (id: string) => void }) {
   const [selected, setSelected] = useState<string | null>(null);
   const data = lanes(dept, tasks);
   const current = tasks.find((t) => t.id === selected) ?? tasks.find((t) => t.status === "overdue") ?? null;
-  const open = tasks.filter((t) => t.status === "overdue" || t.status === "due" || (t.status === "upcoming" && t.dueAt - dept.now <= 120));
+  const open = tasks.filter((t) => t.status === "overdue" || t.status === "due" || (t.status === "upcoming" && t.dueAt - dept.now <= 120)).sort((a, b) => (a.status === "overdue" ? 0 : a.status === "due" ? 1 : 2) - (b.status === "overdue" ? 0 : b.status === "due" ? 1 : 2) || b.lateBy - a.lateBy || a.dueAt - b.dueAt);
 
   return (
-    <div className="grid min-h-0 xl:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="rounds-content grid min-h-0 xl:grid-cols-[minmax(0,1fr)_340px]">
       <section aria-labelledby="rounds-title" className="min-w-0 border-line xl:border-r">
         <SectionHead
           index="03"
-          title="Rounds · every task has an owner and a time"
+          title="What needs doing?"
           aside={
-            <span className="flex items-center gap-3 text-[11px] text-ink-3">
-              <span className="hidden items-center gap-1.5 sm:flex"><Glyph kind="medication" />Med</span>
-              <span className="hidden items-center gap-1.5 sm:flex"><Glyph kind="iv_fluids" />Drip</span>
-              <span className="hidden items-center gap-1.5 sm:flex"><Glyph kind="dressing" />Dressing</span>
-              <span className="hidden items-center gap-1.5 sm:flex"><Glyph kind="vitals" />Obs</span>
-              <span className="hidden items-center gap-1.5 sm:flex"><Glyph kind="review" />Review</span>
-            </span>
+            <span className="text-[13px] text-ink-2">Late tasks first</span>
           }
         />
         <span id="rounds-title" className="sr-only">
           Rounds timeline
         </span>
-        <Timeline d={dept} data={data} selected={current?.id ?? null} onSelect={setSelected} />
         <div className="border-t border-line">
           <div className="flex h-9 items-center px-4">
             <Micro>Late, due now and the next 2 hours · {open.length}</Micro>
           </div>
-          <ul>
-            {open.map((t) => (
-              <TaskRow key={t.id} t={t} now={dept.now} onDone={onDone} onOpen={onOpen} />
-            ))}
-          </ul>
+          {open.length ? <TaskGroups tasks={open} now={dept.now} onDone={onDone} onOpen={onOpen} /> : <div className="friendly-empty"><strong>Nothing due right now</strong><p>New care reminders appear as the shift advances.</p></div>}
         </div>
+        <details className="calm-details rounds-timeline"><summary>Timeline and owners <span>Explore the next six hours</span></summary><Timeline d={dept} data={data} selected={current?.id ?? null} onSelect={setSelected} /></details>
       </section>
       <aside aria-label="Selected task" className="border-t border-line xl:border-t-0">
         {current ? (
@@ -186,9 +187,9 @@ export function Rounds({ dept, tasks, onDone, onOpen }: { dept: Department; task
         ) : (
           <p className="p-6 text-[13px] text-ink-3">Select a task on the timeline to see who owns it and where it came from.</p>
         )}
-        <div className="border-t border-line p-4 text-[12px] leading-relaxed text-ink-3">
+        <details className="calm-details"><summary>How late tasks are measured</summary><div className="p-4 text-[13px] leading-relaxed text-ink-2">
           A task turns late after its grace window: {dur(GRACE_MINUTES.medication)} for medicines, drips and observations, {dur(GRACE_MINUTES.dressing)} for dressings, tests and reviews. Late drips and medicines raise a high-priority alarm; the red tail shows how late a task is. Schedules: {FREQ_LABEL.every_12h}, {FREQ_LABEL.every_8h}, {FREQ_LABEL.every_6h}, {FREQ_LABEL.daily}.
-        </div>
+        </div></details>
       </aside>
     </div>
   );

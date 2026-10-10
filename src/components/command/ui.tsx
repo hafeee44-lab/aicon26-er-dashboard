@@ -50,7 +50,7 @@ export function Glyph({ kind, status }: { kind: TaskKind; status?: TaskStatus })
 }
 
 export function Badge({ children, tone = "normal" }: { children: ReactNode; tone?: Tone }) {
-  return <span className={`inline-flex h-5 items-center border border-current px-1.5 font-mono text-[10px] font-bold tracking-[0.08em] uppercase ${TONE_TEXT[tone]}`}>{children}</span>;
+  return <span className={`inline-flex min-h-6 items-center border border-line px-1.5 text-[13px] font-semibold ${tone === "alert" ? "text-alert" : "text-ink-2"}`}>{children}</span>;
 }
 
 export function ModeBadge({ mode, cached }: { mode: "ai" | "rules"; cached?: boolean }) {
@@ -60,8 +60,8 @@ export function ModeBadge({ mode, cached }: { mode: "ai" | "rules"; cached?: boo
 
 export function SectionHead({ index, title, aside }: { index?: string; title: string; aside?: ReactNode }) {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-3 border-b border-line px-4">
-      <h2 className="flex items-baseline gap-2.5 text-[13px] font-bold tracking-[0.02em]">
+    <div className="section-head flex min-h-11 items-center justify-between gap-3 border-b border-line px-4">
+      <h2 className="flex items-baseline gap-2.5 text-[15px] font-bold">
         {index && <span className="font-mono text-[11px] text-ink-3">{index}</span>}
         {title}
       </h2>
