@@ -532,8 +532,12 @@ function scheduleOrders(d: Department, p: Patient, orders: CareOrder[], start: n
   return tasks;
 }
 
+export function waitingQueue(d: Department) {
+  return d.patients.filter((p) => p.stage === "waiting").sort((a, b) => priority(d, a) - priority(d, b) || a.arrivedAt - b.arrivedAt);
+}
+
 function allocateIn(d: Department) {
-  const queue = d.patients.filter((p) => p.stage === "waiting").sort((a, b) => priority(d, a) - priority(d, b) || a.arrivedAt - b.arrivedAt);
+  const queue = waitingQueue(d);
 
   const corridor = d.patients.filter((p) => !p.bedId && p.stage !== "waiting" && !isDone(p)).sort((a, b) => a.level - b.level);
 

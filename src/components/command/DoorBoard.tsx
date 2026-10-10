@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TARGET_MINUTES } from "@/er/engine";
+import { TARGET_MINUTES, waitingQueue } from "@/er/engine";
 import type { Department, Patient } from "@/er/types";
 import { ageSex, at, bedLabel, doorStatus, onCorridor, shortStaff, staffName, TONE_TEXT } from "./format";
 import { LevelTile, SectionHead, Seg } from "./ui";
@@ -14,7 +14,7 @@ const due = (p: Patient) => p.arrivedAt + TARGET_MINUTES[p.level];
 
 function groups(d: Department) {
   return {
-    waiting: d.patients.filter((p) => p.stage === "waiting").sort((a, b) => due(a) - due(b) || a.level - b.level),
+    waiting: waitingQueue(d),
     treating: d.patients.filter((p) => p.stage === "with_doctor" || p.stage === "awaiting_results").sort((a, b) => a.level - b.level || a.arrivedAt - b.arrivedAt),
     boarding: d.patients.filter((p) => p.stage === "awaiting_bed").sort((a, b) => a.arrivedAt - b.arrivedAt),
   };
@@ -25,7 +25,7 @@ export function patientOrder(d: Department) {
   return [...g.waiting, ...g.treating, ...g.boarding, ...d.patients.filter((p) => p.stage === "admitted")].map((p) => p.id);
 }
 
-function Row({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id: string) => void }) {
+function Row({ d, p, pos, onOpen }: { d: Department; p: Patient; pos?: number; onOpen: (id: string) => void }) {
   const status = doorStatus(d, p);
   const bed = bedLabel(d, p);
   const isNew = d.now - p.arrivedAt <= 0;
@@ -36,12 +36,15 @@ function Row({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id: string)
       <button
         type="button"
         onClick={() => onOpen(p.id)}
-        aria-label={`${p.name || "Unnamed patient"}, level ${p.level}, ${p.complaint}, ${status.code.toLowerCase()}${bed ? `, bed ${bed}` : ""}`}
+        aria-label={`${pos ? `Number ${pos} in the queue: ` : ""}${p.name || "Unnamed patient"}, level ${p.level}, ${p.complaint}, ${status.code.toLowerCase()}${bed ? `, bed ${bed}` : ""}`}
         className={`group grid w-full ${COLS} items-center gap-x-3 border-b border-line px-4 py-2.5 text-left transition-colors hover:bg-raised ${isNew ? "arrive" : ""}`}
       >
         <LevelTile level={p.level} />
         <span className="min-w-0">
           <span className="flex items-center gap-2">
+            {pos !== undefined && (
+              <span className={`flex-none font-mono text-[11px] font-bold tnum ${pos === 1 ? "bg-ink px-1 text-inverse" : "text-ink-3"}`}>{pos === 1 ? "NEXT" : String(pos).padStart(2, "0")}</span>
+            )}
             <span className="truncate font-bold group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{p.name || "Unnamed patient"}</span>
             {p.source && <span className="micro flex-none border border-line px-1 text-[9px]!">Real</span>}
           </span>
@@ -71,7 +74,7 @@ function Row({ d, p, onOpen }: { d: Department; p: Patient; onOpen: (id: string)
   );
 }
 
-function Group({ title, patients, d, onOpen }: { title: string; patients: Patient[]; d: Department; onOpen: (id: string) => void }) {
+function Group({ title, patients, d, numbered = false, onOpen }: { title: string; patients: Patient[]; d: Department; numbered?: boolean; onOpen: (id: string) => void }) {
   if (!patients.length) return null;
   return (
     <>
@@ -79,8 +82,8 @@ function Group({ title, patients, d, onOpen }: { title: string; patients: Patien
         <span className="micro">{title}</span>
         <span className="font-mono text-[11px] text-ink-3">{patients.length}</span>
       </li>
-      {patients.map((p) => (
-        <Row key={p.id} d={d} p={p} onOpen={onOpen} />
+      {patients.map((p, i) => (
+        <Row key={p.id} d={d} p={p} pos={numbered ? i + 1 : undefined} onOpen={onOpen} />
       ))}
     </>
   );
@@ -131,7 +134,15 @@ export function DoorBoard({ dept, onOpen }: { dept: Department; onOpen: (id: str
             <Group title="Treated on a corridor trolley" patients={corridor} d={dept} onOpen={onOpen} />
           ) : (
             <>
-              {show("waiting") && <Group title="Waiting for a doctor" patients={g.waiting} d={dept} onOpen={onOpen} />}
+              {show("waiting") && (
+                <Group
+                  title={dept.policy === "smart" ? "Waiting · picked by urgency, then wait" : "Waiting · picked in arrival order"}
+                  patients={g.waiting}
+                  d={dept}
+                  numbered
+                  onOpen={onOpen}
+                />
+              )}
               {show("treating") && <Group title="In treatment" patients={g.treating} d={dept} onOpen={onOpen} />}
               {show("boarding") && <Group title="Admitted · waiting for a ward bed" patients={g.boarding} d={dept} onOpen={onOpen} />}
             </>

@@ -1,9 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { Policy } from "@/er/types";
 import { at } from "./format";
-import { Button, Micro, Seg } from "./ui";
-import type { Command, Speed } from "./useCommand";
+import { Button, Seg } from "./ui";
+import { MINUTES_PER_SECOND, type Command } from "./useCommand";
 
 export type View = "command" | "floor" | "rounds" | "evidence";
 
@@ -40,6 +41,15 @@ function PlayIcon({ playing }: { playing: boolean }) {
     <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
       <path d="M2.5 1 L10.5 6 L2.5 11 Z" fill="currentColor" />
     </svg>
+  );
+}
+
+function Group({ label, children, className = "" }: { label: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <div className={`flex flex-none flex-col gap-1.5 ${className}`}>
+      <span className="micro flex h-4 items-center whitespace-nowrap">{label}</span>
+      <div className="flex min-h-[34px] items-end gap-1.5">{children}</div>
+    </div>
   );
 }
 
@@ -107,89 +117,56 @@ export function TopBar({ cmd, view, onView, onNew }: { cmd: Command; view: View;
         </div>
       </div>
 
-      <div className="scroll-x flex min-h-[70px] items-center gap-x-4 gap-y-3 bg-panel px-4 py-3 md:flex-wrap md:overflow-visible xl:gap-x-5 xl:px-6">
-        <div className="flex flex-none items-center gap-3">
-          <div className="font-mono text-[40px] leading-none font-bold tracking-tight tnum" aria-label={`Shift time ${at(dept.now)}`}>
-            {at(dept.now)}
-          </div>
-          <div className="w-24 whitespace-nowrap">
-            <span aria-live="polite">
-            {playing ? (
-              <span className="micro flex items-center gap-1.5 text-alert!">
-                <span className="tick-dot size-1.5 rounded-full bg-alert" aria-hidden />
-                Live ×{cmd.speed}
-              </span>
-            ) : (
-              <Micro>Paused</Micro>
-            )}
+      <div className="scroll-x flex items-end gap-x-6 gap-y-3 bg-panel px-4 py-3 md:flex-wrap md:overflow-visible xl:px-6">
+        <Group
+          label={
+            <span aria-live="polite" className={`flex items-center gap-1.5 ${playing ? "text-alert" : ""}`}>
+              {playing && <span className="tick-dot size-1.5 rounded-full bg-alert" aria-hidden />}
+              {playing ? "Live" : "Paused"} · 1 s = {MINUTES_PER_SECOND} min
             </span>
-            <div className="relative mt-1.5 h-1 bg-line" role="img" aria-label={`Shift ${Math.round(progress * 100)}% through, 08:00 to 20:00`}>
-              <div className="absolute inset-y-0 left-0 bg-ink-2" style={{ width: `${progress * 100}%` }} />
-            </div>
-            <span className="mt-1 block font-mono text-[10px] text-ink-3">08:00 → 20:00</span>
-          </div>
-        </div>
+          }
+        >
+          <span className="font-mono text-[38px] leading-[34px] font-bold tracking-tight tnum" aria-label={`Shift time ${at(dept.now)}`}>
+            {at(dept.now)}
+          </span>
+          <span className="ml-2 w-20 self-end pb-0.5">
+            <span className="relative block h-1 bg-line" role="img" aria-label={`Shift ${Math.round(progress * 100)}% through, 08:00 to 20:00`}>
+              <span className="absolute inset-y-0 left-0 bg-ink-2" style={{ width: `${progress * 100}%` }} />
+            </span>
+            <span className="mt-1 block font-mono text-[10px] whitespace-nowrap text-ink-3">08:00 → 20:00</span>
+          </span>
+        </Group>
 
-        <div className="flex flex-none items-center gap-2">
-          <Button onClick={cmd.togglePlaying} aria-label={playing ? "Pause the clock" : "Start the clock"} aria-keyshortcuts="Space" className="w-[92px]">
+        <Group label="Shift clock">
+          <Button onClick={cmd.togglePlaying} aria-label={playing ? "Pause the clock" : "Start the clock"} aria-keyshortcuts="Space" className="w-[96px]">
             <PlayIcon playing={playing} />
             {playing ? "Pause" : "Run"}
           </Button>
-          <Seg<Speed>
-            label="Clock speed, simulated minutes per second"
-            value={cmd.speed}
-            onChange={cmd.setSpeed}
-            options={[
-              { value: 1, label: "×1" },
-              { value: 5, label: "×5" },
-              { value: 15, label: "×15" },
-            ]}
-          />
-          <Button size="sm" onClick={cmd.reset} aria-label="Reset the shift">
+          <Button onClick={cmd.reset} aria-label="Reset the shift">
             Reset
           </Button>
-        </div>
+        </Group>
 
-        <div className="hidden h-9 w-px flex-none bg-line xl:block" />
+        <Group label="Who goes first">
+          <Seg<Policy>
+            label="Who goes first"
+            value={dept.policy}
+            onChange={cmd.changePolicy}
+            options={[
+              { value: "first_come", label: "First come" },
+              { value: "smart", label: "Smart" },
+            ]}
+          />
+        </Group>
 
-        <div className="flex flex-none items-center gap-3">
-          <div>
-            <Micro>Who goes first</Micro>
-            <div className="mt-1">
-              <Seg<Policy>
-                label="Allocation policy"
-                value={dept.policy}
-                onChange={cmd.changePolicy}
-                options={[
-                  { value: "first_come", label: "First come" },
-                  { value: "smart", label: "Smart" },
-                ]}
-              />
-            </div>
-          </div>
-          <p className="hidden max-w-[150px] text-[11px] leading-snug text-ink-3 xl:block">
-            {dept.policy === "smart" ? "Urgency, wait and specialty decide beds and doctors." : "Arrival order. Any free bed, any free doctor."}
-          </p>
-        </div>
+        <Group label="Inject a surge · 15 arrivals" className="md:ml-auto">
+          <Button onClick={() => cmd.surge("demo")}>Demo cases</Button>
+          <Button onClick={() => cmd.surge("real")}>Real visits</Button>
+        </Group>
 
-        <div className="flex flex-none items-center gap-3 md:ml-auto">
-          <div>
-            <Micro>Inject a surge · 15 arrivals</Micro>
-            <div className="mt-1 flex gap-1.5">
-              <Button size="sm" onClick={() => cmd.surge("demo")}>
-                Demo cases
-              </Button>
-              <Button size="sm" onClick={() => cmd.surge("real")}>
-                Real visits
-              </Button>
-            </div>
-          </div>
-          <p className="hidden font-mono text-[10px] leading-relaxed text-ink-3 2xl:block">
-            N new arrival
-            <br />
-            Space run · 1–4 views
-          </p>
-        </div>
+        <Group label="Keys" className="hidden 2xl:flex">
+          <span className="font-mono text-[11px] whitespace-nowrap text-ink-3">N new · Space run · 1–4 views · Esc close</span>
+        </Group>
       </div>
     </header>
   );
